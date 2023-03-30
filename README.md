@@ -21,3 +21,8 @@
 
 
 ## Domain/Entity
+1. File - Object to be stored/uploaded
+2. Folder - Space used as a directory to store the files
+3. User - Owner of the account used to create the `folder` and store the `files`
+
+[{https://lucid.app/lucidchart/49967d8f-869a-4757-bb3f-8ada14ea7cde/edit?invitationId=inv_c7ee6e19-70c1-4fc1-9302-c859686f2972)]
