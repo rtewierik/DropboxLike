@@ -1,4 +1,4 @@
-namespace Api.Models;
+namespace DropboxLike.Domain.Models;
 
 public class File
 {
