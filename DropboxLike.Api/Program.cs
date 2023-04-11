@@ -6,7 +6,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 
-builder.Services.AddScoped<IFileRepository, FileRepository>();
+// builder.Services.AddScoped<IFileRepository, FileRepository>();
+builder.Services.AddSingleton<IAwsConfiguration, AwsConfiguration>();
 
 var app = builder.Build();
 

@@ -1,57 +1,57 @@
-using Amazon.Runtime;
+using Amazon;
 using Amazon.S3;
 using Amazon.S3.Transfer;
 using DropboxLike.Domain.Contracts;
 using DropboxLike.Domain.Data;
-using DropboxLike.Domain.Models;
 
 namespace DropboxLike.Domain.Repositors;
 
 public class FileRepository : IFileRepository
 {
-  public async Task<S3Response> UploadFileAsync(FileObject file, AwsCredentials aWSCredentials)
+  private readonly string _bucketName;
+  private readonly IAmazonS3 _awsS3Client;
+
+  private S3Response _response;
+
+  public FileRepository(string awsAccessKeyId, string awsSecretAccessKey, string region, string bucketName)
   {
-    // Adding AWS Creds
-    var credentials = new BasicAWSCredentials(aWSCredentials.AwsKey, aWSCredentials.AwsSecretKey);
+    _bucketName = bucketName;
+    _awsS3Client = new AmazonS3Client(awsAccessKeyId, awsSecretAccessKey, RegionEndpoint.GetBySystemName(region));
+  }
 
-    // Region
-    var config = new AmazonS3Config() { RegionEndpoint = Amazon.RegionEndpoint.USEast1};
-
-    var response = new S3Response();
-
+  public async Task<S3Response> UploadFileAsync(IFormFile file)
+  {
     try
     {
-      // Payload
-      var uploadRequest = new TransferUtilityUploadRequest()
+      using (var newMemoryStream = new MemoryStream())
       {
-        InputStream = file.InputStream,
-        Key = file.Name,
-        BucketName = file.BucketName,
-        CannedACL = S3CannedACL.NoACL 
-      };
+        file.CopyTo(newMemoryStream);
+        var uploadRequest = new TransferUtilityUploadRequest()
+        {
+          InputStream = newMemoryStream,
+          Key = file.Name,
+          BucketName = _bucketName,
+          ContentType = file.ContentType,
+          CannedACL = S3CannedACL.NoACL 
+        };
+        var transferUtility = new TransferUtility(_awsS3Client);
+  
+        await transferUtility.UploadAsync(uploadRequest);
 
-      // Create S3 client
-      using var client = new AmazonS3Client(credentials, config);
-
-      // Upload utility to S3
-      var transferUtility = new TransferUtility(client);
-
-      // Upload
-      await transferUtility.UploadAsync(uploadRequest);
-
-      response.StatusCode = 200;
-      response.Message = $"{file.Name} has been uploaded to s3 successfully";
+        _response.StatusCode = 200;
+        _response.Message = $"{file.Name} has been uploaded to s3 successfully";
+      }
     }
     catch (AmazonS3Exception ex)
     {
-      response.StatusCode = (int)ex.StatusCode;
-      response.Message = ex.Message;
+      _response.StatusCode = (int)ex.StatusCode;
+      _response.Message = ex.Message;
     }
     catch (Exception ex)
     {
-      response.StatusCode = 500;
-      response.Message = ex.Message;
+      _response.StatusCode = 500;
+      _response.Message = ex.Message;
     }
-    return response;
+    return _response;
   }
 }
