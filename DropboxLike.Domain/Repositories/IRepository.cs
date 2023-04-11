@@ -1,4 +1,5 @@
-namespace DropboxLike.Domain.Contracts;
+namespace DropboxLike.Domain.Repositories;
+
 public interface IRepository<T>
 {
   public Task<T> Create(T _object);

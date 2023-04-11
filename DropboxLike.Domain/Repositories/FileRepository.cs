@@ -1,22 +1,24 @@
 using Amazon;
 using Amazon.S3;
 using Amazon.S3.Transfer;
-using DropboxLike.Domain.Contracts;
-using DropboxLike.Domain.Data;
+using DropboxLike.Domain.Configuration;
+using DropboxLike.Domain.Models.Response;
+using Microsoft.Extensions.Options;
 
-namespace DropboxLike.Domain.Repositors;
+namespace DropboxLike.Domain.Repositories;
 
 public class FileRepository : IFileRepository
 {
   private readonly string _bucketName;
   private readonly IAmazonS3 _awsS3Client;
 
-  private S3Response _response;
+  private S3Response _response = null!;
 
-  public FileRepository(string awsAccessKeyId, string awsSecretAccessKey, string region, string bucketName)
+  public FileRepository(IOptions<IAwsConfiguration> options)
   {
-    _bucketName = bucketName;
-    _awsS3Client = new AmazonS3Client(awsAccessKeyId, awsSecretAccessKey, RegionEndpoint.GetBySystemName(region));
+    var configuration = options.Value;
+    _bucketName = configuration.BucketName;
+    _awsS3Client = new AmazonS3Client(configuration.AwsAccessKey, configuration.AwsSecretAccessKey, RegionEndpoint.GetBySystemName(configuration.Region));
   }
 
   public async Task<S3Response> UploadFileAsync(IFormFile file)
