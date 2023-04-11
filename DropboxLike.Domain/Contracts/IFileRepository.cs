@@ -4,5 +4,5 @@ using DropboxLike.Domain.Models;
 namespace DropboxLike.Domain.Contracts;
 public interface IFileRepository
 {
-  Task<S3Response> UploadFileAsync(FileObject file, AwsCredentials aWSCredentials);
+  Task<S3Response> UploadFileAsync(IFormFile file);
 }
