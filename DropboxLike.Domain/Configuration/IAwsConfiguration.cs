@@ -1,4 +1,4 @@
-namespace DropboxLike.Domain.Contracts;
+namespace DropboxLike.Domain.Configuration;
 
 public interface IAwsConfiguration
 {

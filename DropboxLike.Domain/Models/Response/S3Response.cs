@@ -1,4 +1,4 @@
-namespace DropboxLike.Domain.Data;
+namespace DropboxLike.Domain.Models.Response;
 
 public class S3Response
 {

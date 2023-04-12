@@ -1,13 +1,28 @@
-using DropboxLike.Domain.Contracts;
-using DropboxLike.Domain.Repositors;
+using DropboxLike.Domain.Configuration;
+using DropboxLike.Domain.Repositories;
+using DropboxLike.Domain.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// 1. Add configuration.
+builder.Services.Configure<IAwsConfiguration>(options =>
+{
+    options.BucketName = Environment.GetEnvironmentVariable("AWS_BUCKET_NAME") ?? string.Empty;
+    options.AwsAccessKey = Environment.GetEnvironmentVariable("AWS_ACCESS_KEY") ?? string.Empty;
+    options.AwsSecretAccessKey = Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY") ?? string.Empty;
+    options.Region = Environment.GetEnvironmentVariable("AWS_REGION") ?? string.Empty;
+});
+
+// 2. Add lowest layer components, namely repositories.
+builder.Services.AddScoped<IFileRepository, FileRepository>();
+
+// 3. Add higher layer components, namely services.
+builder.Services.AddScoped<IFileService, FileService>();
+
+// 4. Add even higher layer components, namely controllers and the related authorization and authentication.
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 
-// builder.Services.AddScoped<IFileRepository, FileRepository>();
-builder.Services.AddSingleton<IAwsConfiguration, AwsConfiguration>();
 
 var app = builder.Build();
 

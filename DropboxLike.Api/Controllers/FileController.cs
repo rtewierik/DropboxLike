@@ -1,23 +1,17 @@
-using DropboxLike.Domain.Contracts;
-using DropboxLike.Domain.Data;
-using DropboxLike.Domain.Models;
-using DropboxLike.Infrastructure.Common;
+using DropboxLike.Domain.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DropboxLike.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class Filecontroller : ControllerBase
+public class FileController : ControllerBase
 {
-  // private readonly IFileRepository _fileRepository;
-  private readonly IAwsConfiguration _awsConfiguation;
-  private IFileStore _fileStore;
-  private readonly IConfiguration _config;
-  public Filecontroller(IAwsConfiguration awsConfiguration, IConfiguration config)
+  private readonly IFileService _fileService;
+  
+  public FileController(IFileService fileService)
   {
-    _awsConfiguation = awsConfiguration;
-    _config = config;
+    _fileService = fileService;
   }
 
   [HttpPost]
@@ -27,10 +21,10 @@ public class Filecontroller : ControllerBase
     var fileExt = Path.GetExtension(file.Name);
     var objName = $"{Guid.NewGuid()}.{fileExt}";
 
-    _fileStore = new FileStore((Domain.Repositors.AwsConfiguration)_awsConfiguation);
+    // TODO: Should be made asynchronous, otherwise async controller method does not make sense.
+    // The asynchronous approach is also more performant.
+    var response = _fileService.UploadSingleFile(file);
 
-    var res = _fileStore.UploadSingleFile(file);
-
-    return Ok(res);
+    return Ok(response);
   }
 }
