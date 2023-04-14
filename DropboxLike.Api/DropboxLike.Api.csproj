@@ -2,7 +2,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DropboxLike.Domain\DropboxLike.Domain.csproj" />
-    <ProjectReference Include="..\DropboxLike.Infrastructure\DropboxLike.Infrastructure.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

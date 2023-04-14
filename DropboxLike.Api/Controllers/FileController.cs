@@ -1,51 +1,30 @@
-using Amazon.S3;
-using DropboxLike.Domain.Contracts;
-using DropboxLike.Domain.Data;
-using DropboxLike.Domain.Models;
-using DropboxLike.Domain.Repositors;
-using Microsoft.AspNetCore.Http;
+using DropboxLike.Domain.Configuration;
+using DropboxLike.Domain.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 
 namespace DropboxLike.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class Filecontroller : ControllerBase
+public class FileController : ControllerBase
 {
-  private readonly IFileRepository _fileRepository;
-  private readonly IConfiguration _config;
-  public Filecontroller(IFileRepository fileRepository, IConfiguration config)
+  private IFileService _fileService;
+  private readonly IAwsConfiguration _awsConfiguration;
+  
+  public FileController(IAwsConfiguration awsConfiguration)
   {
-    _fileRepository = fileRepository;
-    _config = config;
+    _awsConfiguration = awsConfiguration;
   }
 
   [HttpPost]
   [Route("Upload")]
   public async Task<IActionResult> UploadFileAsync(IFormFile file)
   {
-    await using var target = new MemoryStream();
-    await file.CopyToAsync(target);
-
     var fileExt = Path.GetExtension(file.Name);
     var objName = $"{Guid.NewGuid()}.{fileExt}";
 
-    var s3Obj = new FileObject()
-    {
-      BucketName = "dropboxlike",
-      InputStream = target,
-      Name = objName
-    };
+		_fileService = new FileService((IFileService)_awsConfiguration);
 
-    var cred = new AwsCredentials()
-    {
-      AwsKey = _config["AwsConfiguration:AWSAccessKey"],
-      AwsSecretKey = _config["AwsConfiguration:AWSSecretKey"]
-    };
-
-    var res = await _fileRepository.UploadFileAsync(s3Obj, cred);
-
-    return Ok(res);
+    return Ok();
   }
 }
