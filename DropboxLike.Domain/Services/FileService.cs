@@ -1,19 +1,18 @@
 using DropboxLike.Domain.Models.Response;
-using DropboxLike.Domain.Repositories;
 
 namespace DropboxLike.Domain.Services;
 
 public class FileService : IFileService
 {
-    private readonly IFileRepository _fileRepository;
+    private readonly IFileService _fileService;
 
-    public FileService(IFileRepository fileRepository)
+    public FileService(IFileService fileService)
     {
-        _fileRepository = fileRepository;
+        _fileService = fileService;
     }
 
-    public S3Response UploadSingleFile(IFormFile file)
-    {
-        return _fileRepository.UploadFileAsync(file).Result;
-    }
+  public S3Response UploadSingleFile(IFormFile file)
+  {
+    throw new NotImplementedException();
+  }
 }

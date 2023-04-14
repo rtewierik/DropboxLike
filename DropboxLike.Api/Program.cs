@@ -1,6 +1,4 @@
 using DropboxLike.Domain.Configuration;
-using DropboxLike.Domain.Repositories;
-using DropboxLike.Domain.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,10 +12,10 @@ builder.Services.Configure<IAwsConfiguration>(options =>
 });
 
 // 2. Add lowest layer components, namely repositories.
-builder.Services.AddScoped<IFileRepository, FileRepository>();
+builder.Services.AddScoped<DropboxLike.Domain.Services.IFileService, DropboxLike.Domain.Services.FileService>();
 
 // 3. Add higher layer components, namely services.
-builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<DropboxLike.Domain.Implementations.IFileHandler, DropboxLike.Domain.Implementations.FileHandler>();
 
 // 4. Add even higher layer components, namely controllers and the related authorization and authentication.
 builder.Services.AddAuthorization();

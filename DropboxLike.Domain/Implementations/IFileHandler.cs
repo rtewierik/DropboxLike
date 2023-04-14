@@ -1,8 +1,8 @@
 using DropboxLike.Domain.Models.Response;
 
-namespace DropboxLike.Domain.Repositories;
+namespace DropboxLike.Domain.Implementations;
 
-public interface IFileRepository
+public interface IFileHandler
 {
   Task<S3Response> UploadFileAsync(IFormFile file);
 }
