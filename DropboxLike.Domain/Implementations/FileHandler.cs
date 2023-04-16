@@ -14,11 +14,7 @@ public class FileHandler : IFileHandler
 
   private S3Response _response = new();
 
-<<<<<<< Updated upstream:DropboxLike.Domain/Implementations/FileHandler.cs
-  public FileHandler(IOptions<IAwsConfiguration> options)
-=======
-  public FileRepository(IOptions<AwsConfiguration> options)
->>>>>>> Stashed changes:DropboxLike.Domain/Repositories/FileRepository.cs
+  public FileHandler(IOptions<AwsConfiguration> options)
   {
     var configuration = options.Value;
     _bucketName = configuration.BucketName;
