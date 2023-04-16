@@ -12,9 +12,13 @@ public class FileHandler : IFileHandler
   private readonly string _bucketName;
   private readonly IAmazonS3 _awsS3Client;
 
-  private S3Response _response = null!;
+  private S3Response _response = new();
 
+<<<<<<< Updated upstream:DropboxLike.Domain/Implementations/FileHandler.cs
   public FileHandler(IOptions<IAwsConfiguration> options)
+=======
+  public FileRepository(IOptions<AwsConfiguration> options)
+>>>>>>> Stashed changes:DropboxLike.Domain/Repositories/FileRepository.cs
   {
     var configuration = options.Value;
     _bucketName = configuration.BucketName;
