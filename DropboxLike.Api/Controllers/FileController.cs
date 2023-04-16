@@ -8,12 +8,11 @@ namespace DropboxLike.Api.Controllers;
 [Route("api/[controller]")]
 public class FileController : ControllerBase
 {
-  private IFileService _fileService;
-  private readonly AwsConfiguration _awsConfiguration;
+  private readonly IFileService _fileService;
   
-  public FileController(AwsConfiguration awsConfiguration)
+  public FileController(IFileService fileService)
   {
-    _awsConfiguration = awsConfiguration;
+    _fileService = fileService;
   }
 
   [HttpPost]
@@ -23,8 +22,8 @@ public class FileController : ControllerBase
     var fileExt = Path.GetExtension(file.Name);
     var objName = $"{Guid.NewGuid()}.{fileExt}";
 
-		_fileService = new FileService((IFileService)_awsConfiguration);
+    var response = _fileService.UploadSingleFile(file);
 
-    return Ok();
+    return Ok(response);
   }
 }

@@ -5,16 +5,16 @@ using DropboxLike.Domain.Configuration;
 using DropboxLike.Domain.Models.Response;
 using Microsoft.Extensions.Options;
 
-namespace DropboxLike.Domain.Implementations;
+namespace DropboxLike.Domain.Repositories;
 
-public class FileHandler : IFileHandler
+public class FileRepository : IFileRepository
 {
   private readonly string _bucketName;
   private readonly IAmazonS3 _awsS3Client;
 
   private S3Response _response = new();
 
-  public FileHandler(IOptions<AwsConfiguration> options)
+  public FileRepository(IOptions<AwsConfiguration> options)
   {
     var configuration = options.Value;
     _bucketName = configuration.BucketName;

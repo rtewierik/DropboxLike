@@ -12,10 +12,10 @@ builder.Services.Configure<AwsConfiguration>(options =>
 });
 
 // 2. Add lowest layer components, namely repositories.
-builder.Services.AddScoped<DropboxLike.Domain.Services.IFileService, DropboxLike.Domain.Services.FileService>();
+builder.Services.AddScoped<DropboxLike.Domain.Repositories.IFileRepository, DropboxLike.Domain.Repositories.FileRepository>();
 
 // 3. Add higher layer components, namely services.
-builder.Services.AddScoped<DropboxLike.Domain.Implementations.IFileHandler, DropboxLike.Domain.Implementations.FileHandler>();
+builder.Services.AddScoped<DropboxLike.Domain.Services.IFileService, DropboxLike.Domain.Services.FileService>();
 
 // 4. Add even higher layer components, namely controllers and the related authorization and authentication.
 builder.Services.AddAuthorization();
