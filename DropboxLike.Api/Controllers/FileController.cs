@@ -9,9 +9,9 @@ namespace DropboxLike.Api.Controllers;
 public class FileController : ControllerBase
 {
   private IFileService _fileService;
-  private readonly IAwsConfiguration _awsConfiguration;
+  private readonly AwsConfiguration _awsConfiguration;
   
-  public FileController(IAwsConfiguration awsConfiguration)
+  public FileController(AwsConfiguration awsConfiguration)
   {
     _awsConfiguration = awsConfiguration;
   }

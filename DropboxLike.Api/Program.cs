@@ -3,7 +3,7 @@ using DropboxLike.Domain.Configuration;
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. Add configuration.
-builder.Services.Configure<IAwsConfiguration>(options =>
+builder.Services.Configure<AwsConfiguration>(options =>
 {
     options.BucketName = Environment.GetEnvironmentVariable("AWS_BUCKET_NAME") ?? string.Empty;
     options.AwsAccessKey = Environment.GetEnvironmentVariable("AWS_ACCESS_KEY") ?? string.Empty;

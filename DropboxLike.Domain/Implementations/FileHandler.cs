@@ -12,9 +12,9 @@ public class FileHandler : IFileHandler
   private readonly string _bucketName;
   private readonly IAmazonS3 _awsS3Client;
 
-  private S3Response _response = null!;
+  private S3Response _response = new();
 
-  public FileHandler(IOptions<IAwsConfiguration> options)
+  public FileHandler(IOptions<AwsConfiguration> options)
   {
     var configuration = options.Value;
     _bucketName = configuration.BucketName;
