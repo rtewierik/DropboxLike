@@ -12,8 +12,8 @@ public class FileService : IFileService
         _fileRepository = fileRepository;
     }
 
-    public S3Response UploadSingleFile(IFormFile file)
+    public async Task<S3Response> UploadSingleFileAsync(IFormFile file)
     {
-        return _fileRepository.UploadFileAsync(file).Result;
+        return await _fileRepository.UploadFileAsync(file);
     }
 }

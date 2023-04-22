@@ -28,10 +28,11 @@ public class FileRepository : IFileRepository
       using (var newMemoryStream = new MemoryStream())
       {
         file.CopyTo(newMemoryStream);
+        var fileExt = Path.GetExtension(file.Name);
         var uploadRequest = new TransferUtilityUploadRequest()
         {
           InputStream = newMemoryStream,
-          Key = file.Name,
+          Key = $"{Guid.NewGuid()}.{fileExt}",
           BucketName = _bucketName,
           ContentType = file.ContentType,
           CannedACL = S3CannedACL.NoACL 

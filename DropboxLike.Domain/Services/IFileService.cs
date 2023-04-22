@@ -4,5 +4,5 @@ namespace DropboxLike.Domain.Services;
 
 public interface IFileService
 {
-    S3Response UploadSingleFile(IFormFile file);
+    Task<S3Response> UploadSingleFileAsync(IFormFile file);
 }

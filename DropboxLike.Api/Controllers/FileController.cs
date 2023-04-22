@@ -19,10 +19,7 @@ public class FileController : ControllerBase
   [Route("Upload")]
   public async Task<IActionResult> UploadFileAsync(IFormFile file)
   {
-    var fileExt = Path.GetExtension(file.Name);
-    var objName = $"{Guid.NewGuid()}.{fileExt}";
-
-    var response = _fileService.UploadSingleFile(file);
+    var response = await _fileService.UploadSingleFileAsync(file);
 
     return Ok(response);
   }
