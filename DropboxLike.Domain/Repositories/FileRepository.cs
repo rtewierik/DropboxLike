@@ -1,5 +1,6 @@
 using Amazon;
 using Amazon.S3;
+using Amazon.S3.Model;
 using Amazon.S3.Transfer;
 using DropboxLike.Domain.Configuration;
 using DropboxLike.Domain.Models.Response;
@@ -56,5 +57,34 @@ public class FileRepository : IFileRepository
       _response.Message = ex.Message;
     }
     return _response;
+  }
+
+  public async Task<byte[]> DownloadFileAsync(string fileId)
+  {
+    MemoryStream memoryStream = null;
+
+    try
+    {
+      GetObjectRequest request = new GetObjectRequest
+      {
+        BucketName = _bucketName,
+        Key = fileId
+      };
+      using (var response = await _awsS3Client.GetObjectAsync(request))
+      using (memoryStream = new MemoryStream())
+      {
+        await response.ResponseStream.CopyToAsync(memoryStream);
+      }
+    }
+    catch (AmazonS3Exception ex)
+    {
+      _response.StatusCode = (int)ex.StatusCode;
+      _response.Message = ex.Message;
+    }
+    catch (Exception ex)
+    {
+      _response.Message = ex.Message;
+    }
+    return memoryStream.ToArray();
   }
 }
