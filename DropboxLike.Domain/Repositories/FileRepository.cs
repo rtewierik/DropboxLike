@@ -1,8 +1,10 @@
+using System.Net;
 using Amazon;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Transfer;
 using DropboxLike.Domain.Configuration;
+using DropboxLike.Domain.Models;
 using DropboxLike.Domain.Models.Response;
 using Microsoft.Extensions.Options;
 
@@ -36,10 +38,10 @@ public class FileRepository : IFileRepository
           Key = $"{Guid.NewGuid()}.{fileExt}",
           BucketName = _bucketName,
           ContentType = file.ContentType,
-          CannedACL = S3CannedACL.NoACL 
+          CannedACL = S3CannedACL.NoACL
         };
         var transferUtility = new TransferUtility(_awsS3Client);
-  
+
         await transferUtility.UploadAsync(uploadRequest);
 
         _response.StatusCode = 200;
@@ -59,32 +61,29 @@ public class FileRepository : IFileRepository
     return _response;
   }
 
-  public async Task<byte[]> DownloadFileAsync(string fileId)
+  public async Task<FileObject> DownloadFileAsync(string uniqueStorageName)
   {
-    MemoryStream memoryStream = null;
 
-    try
+    GetObjectRequest request = new GetObjectRequest
     {
-      GetObjectRequest request = new GetObjectRequest
-      {
-        BucketName = _bucketName,
-        Key = fileId
-      };
-      using (var response = await _awsS3Client.GetObjectAsync(request))
-      using (memoryStream = new MemoryStream())
-      {
-        await response.ResponseStream.CopyToAsync(memoryStream);
-      }
-    }
-    catch (AmazonS3Exception ex)
-    {
-      _response.StatusCode = (int)ex.StatusCode;
-      _response.Message = ex.Message;
-    }
-    catch (Exception ex)
-    {
-      _response.Message = ex.Message;
-    }
-    return memoryStream.ToArray();
+      BucketName = _bucketName,
+      Key = WebUtility.HtmlDecode(uniqueStorageName).ToLowerInvariant()
+    };
+    using var response = await _awsS3Client.GetObjectAsync(request);
+    await using var responseStream = response.ResponseStream;
+    await using var memory = new MemoryStream();
+
+    var originalFileName = response.Metadata["x-amz-meta-tile"];
+    var contentType = response.Metadata["x-amz-meta-content-type"];
+    await responseStream.CopyToAsync(memory);
+    var responseBody = memory.ToArray();
+
+    return new FileObject(
+      originalFileName,
+      uniqueStorageName,
+      contentType,
+      responseBody,
+      response.LastModified
+    );
   }
 }

@@ -1,8 +1,25 @@
 namespace DropboxLike.Domain.Models;
 
-public class FileObject
+public record FileObject
 {
-  public string? Name { get; set; } = null!;
-  public MemoryStream? InputStream { get; set; } = null!;
-  public string? BucketName { get; set; }
+  public FileObject(
+    string originalFileName,
+    string uniqueStorageName,
+    string contentType,
+    byte[] content,
+    DateTimeOffset lastModifiedAt
+  )
+  {
+    Content = content;
+    OriginalFileName = originalFileName;
+    UniqueStorageName = uniqueStorageName;
+    LastModifiedAt = lastModifiedAt;
+    ContentType = contentType;
+  }
+
+  public byte[] Content { get; }
+  public string OriginalFileName { get; }
+  public string UniqueStorageName { get; }
+  public DateTimeOffset LastModifiedAt { get; }
+  public string ContentType { get; }
 }

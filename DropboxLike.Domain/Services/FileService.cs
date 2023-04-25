@@ -1,3 +1,4 @@
+using DropboxLike.Domain.Models;
 using DropboxLike.Domain.Models.Response;
 using DropboxLike.Domain.Repositories;
 
@@ -17,7 +18,7 @@ public class FileService : IFileService
         return await _fileRepository.UploadFileAsync(file);
     }
 
-    public async Task<byte[]> DownloadSingleFileAsync(string file)
+    public async Task<FileObject> DownloadSingleFileAsync(string file)
     {
         return await _fileRepository.DownloadFileAsync(file);
     }
