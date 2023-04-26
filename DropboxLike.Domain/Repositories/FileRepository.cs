@@ -61,29 +61,21 @@ public class FileRepository : IFileRepository
     return _response;
   }
 
-  public async Task<FileObject> DownloadFileAsync(string uniqueStorageName)
+  public async Task<byte[]> DownloadFileAsync(string fileId)
   {
+    MemoryStream memoryStream = null;
 
     GetObjectRequest request = new GetObjectRequest
     {
       BucketName = _bucketName,
-      Key = WebUtility.HtmlDecode(uniqueStorageName).ToLowerInvariant()
+      Key = WebUtility.HtmlDecode(fileId).ToLowerInvariant()
     };
     using var response = await _awsS3Client.GetObjectAsync(request);
-    await using var responseStream = response.ResponseStream;
-    await using var memory = new MemoryStream();
+    using (memoryStream = new MemoryStream())
+    {
+      await response.ResponseStream.CopyToAsync(memoryStream);
+    }
 
-    var originalFileName = response.Metadata["x-amz-meta-tile"];
-    var contentType = response.Metadata["x-amz-meta-content-type"];
-    await responseStream.CopyToAsync(memory);
-    var responseBody = memory.ToArray();
-
-    return new FileObject(
-      originalFileName,
-      uniqueStorageName,
-      contentType,
-      responseBody,
-      response.LastModified
-    );
+    return memoryStream.ToArray();
   }
 }
