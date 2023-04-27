@@ -25,11 +25,11 @@ public class FileController : ControllerBase
   }
 
   [HttpGet]
-  [Route("Download")]
+  [Route("Download/{fileId}")]
   public async Task<IActionResult> DownloadFileAsync(string fileId)
   {
     var file = await _fileService.DownloadSingleFileAsync(fileId);
 
-    return File(file, fileId);
+    return File(file, "application/octet-stream", fileId);
   }
 }
