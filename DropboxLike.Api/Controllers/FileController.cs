@@ -28,7 +28,9 @@ public class FileController : ControllerBase
   [Route("Download/{fileId}")]
   public async Task<IActionResult> DownloadFileAsync(string fileId)
   {
-    var file = await _fileService.DownloadSingleFileAsync(fileId);
+    var destinationFolderPath = $"/home/godfreyowidi/Downloads/TestsDowloads";
+
+    var file = await _fileService.DownloadSingleFileAsync(fileId, destinationFolderPath);
 
     return File(file, "application/octet-stream", fileId);
   }

@@ -18,8 +18,8 @@ public class FileService : IFileService
         return await _fileRepository.UploadFileAsync(file);
     }
 
-    public async Task<byte[]> DownloadSingleFileAsync(string fileId)
+    public async Task<byte[]> DownloadSingleFileAsync(string fileId, string destinationFolderPath)
     {
-        return await _fileRepository.DownloadFileAsync(fileId);
+        return await _fileRepository.DownloadFileAsync(fileId, destinationFolderPath);
     }
 }

@@ -61,9 +61,8 @@ public class FileRepository : IFileRepository
     return _response;
   }
 
-  public async Task<byte[]> DownloadFileAsync(string fileId)
+  public async Task<byte[]> DownloadFileAsync(string fileId, string destinationFolderPath)
   {
-    MemoryStream memoryStream = null;
 
     GetObjectRequest request = new GetObjectRequest
     {
@@ -71,11 +70,31 @@ public class FileRepository : IFileRepository
       Key = WebUtility.HtmlDecode(fileId).ToLowerInvariant()
     };
     using var response = await _awsS3Client.GetObjectAsync(request);
-    using (memoryStream = new MemoryStream())
+    
+    var filePath = Path.Combine(destinationFolderPath, fileId);
+
+    using (var fileStream = File.Create(filePath))
     {
-      await response.ResponseStream.CopyToAsync(memoryStream);
+      await response.ResponseStream.CopyToAsync(fileStream);
     }
 
-    return memoryStream.ToArray();
+    byte[] result = System.Text.Encoding.UTF8.GetBytes(filePath);
+    return result;
+  }
+
+  public async Task<S3Response> DeleteFileAsync(string fileId)
+  {
+    DeleteObjectRequest request = new DeleteObjectRequest
+    {
+      BucketName = _bucketName,
+      Key = WebUtility.HtmlDecode(fileId).ToLowerInvariant()
+    };
+
+    var response = await _awsS3Client.DeleteObjectAsync(request);
+
+    _response.StatusCode = 204;
+    _response.Message = $"{fileId} has been deleted successfully.";
+
+    return _response;
   }
 }
