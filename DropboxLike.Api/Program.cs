@@ -1,4 +1,6 @@
 using DropboxLike.Domain.Configuration;
+using DropboxLike.Domain.Data;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +12,9 @@ builder.Services.Configure<AwsConfiguration>(options =>
     options.AwsSecretAccessKey = Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY") ?? string.Empty;
     options.Region = Environment.GetEnvironmentVariable("AWS_REGION") ?? string.Empty;
 });
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DropboxLikeConn")));
 
 // 2. Add lowest layer components, namely repositories.
 builder.Services.AddScoped<DropboxLike.Domain.Repositories.IFileRepository, DropboxLike.Domain.Repositories.FileRepository>();
