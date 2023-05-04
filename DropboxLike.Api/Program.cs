@@ -5,7 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 // 1. Add configuration.
 builder.Services.Configure<AwsConfiguration>(options =>
 {
-    options.BucketName = Environment.GetEnvironmentVariable("AWS_BUCKET_NAME") ?? string.Empty;
+    options.BucketName = builder.Configuration.GetSection("Aws:BucketName").Get<string>() ?? string.Empty;
     options.AwsAccessKey = Environment.GetEnvironmentVariable("AWS_ACCESS_KEY") ?? string.Empty;
     options.AwsSecretAccessKey = Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY") ?? string.Empty;
     options.Region = Environment.GetEnvironmentVariable("AWS_REGION") ?? string.Empty;
@@ -20,7 +20,6 @@ builder.Services.AddScoped<DropboxLike.Domain.Services.IFileService, DropboxLike
 // 4. Add even higher layer components, namely controllers and the related authorization and authentication.
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
-
 
 var app = builder.Build();
 

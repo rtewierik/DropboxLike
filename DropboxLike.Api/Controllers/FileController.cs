@@ -9,7 +9,7 @@ namespace DropboxLike.Api.Controllers;
 public class FileController : ControllerBase
 {
   private readonly IFileService _fileService;
-  
+
   public FileController(IFileService fileService)
   {
     _fileService = fileService;
@@ -19,11 +19,19 @@ public class FileController : ControllerBase
   [Route("Upload")]
   public async Task<IActionResult> UploadFileAsync(IFormFile file)
   {
-    var fileExt = Path.GetExtension(file.Name);
-    var objName = $"{Guid.NewGuid()}.{fileExt}";
-
-    var response = _fileService.UploadSingleFile(file);
+    var response = await _fileService.UploadSingleFileAsync(file);
 
     return Ok(response);
+  }
+
+  [HttpGet]
+  [Route("Download/{fileId}")]
+  public async Task<IActionResult> DownloadFileAsync(string fileId)
+  {
+    var destinationFolderPath = $"/home/godfreyowidi/Downloads/TestsDowloads";
+
+    var file = await _fileService.DownloadSingleFileAsync(fileId, destinationFolderPath);
+
+    return File(file, "application/octet-stream", fileId);
   }
 }

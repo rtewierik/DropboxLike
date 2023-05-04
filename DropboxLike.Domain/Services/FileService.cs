@@ -1,3 +1,4 @@
+using DropboxLike.Domain.Models;
 using DropboxLike.Domain.Models.Response;
 using DropboxLike.Domain.Repositories;
 
@@ -12,8 +13,13 @@ public class FileService : IFileService
         _fileRepository = fileRepository;
     }
 
-    public S3Response UploadSingleFile(IFormFile file)
+    public async Task<S3Response> UploadSingleFileAsync(IFormFile file)
     {
-        return _fileRepository.UploadFileAsync(file).Result;
+        return await _fileRepository.UploadFileAsync(file);
+    }
+
+    public async Task<byte[]> DownloadSingleFileAsync(string fileId, string destinationFolderPath)
+    {
+        return await _fileRepository.DownloadFileAsync(fileId, destinationFolderPath);
     }
 }
