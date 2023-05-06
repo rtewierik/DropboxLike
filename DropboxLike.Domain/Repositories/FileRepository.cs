@@ -77,20 +77,48 @@ public class FileRepository : IFileRepository
 
   public async Task<byte[]> DownloadFileAsync(string fileId, string destinationFolderPath)
   {
-    GetObjectRequest request = new GetObjectRequest
-    {
-      BucketName = _bucketName,
-      Key = WebUtility.HtmlDecode(fileId).ToLowerInvariant()
-    };
-    using var response = await _awsS3Client.GetObjectAsync(request);
-
     var filePath = Path.Combine(destinationFolderPath, fileId);
 
-    using (var fileStream = File.Create(filePath))
+    var results = _applicationDbContext.FileModels
+        .Where(x => x.FileName == fileId)
+        .ToList();
+
+    // string results = "SELECT * FROM FileModels WHERE FileName = @fileId";
+
+    List<FileModel> fileModels = new List<FileModel>();
+    foreach (var res in results)
     {
-      await response.ResponseStream.CopyToAsync(fileStream);
+      FileModel item = new FileModel();
+      item.FileName = res.FileName;
+      fileModels.Add(item);
     }
 
+    ListObjectsV2Request listRequest = new ListObjectsV2Request
+    {
+      BucketName = _bucketName,
+    };
+    ListObjectsV2Response listResponse = await _awsS3Client.ListObjectsV2Async(listRequest);
+
+    foreach (S3Object obj in listResponse.S3Objects)
+    {
+      foreach (FileModel file in fileModels)
+      {
+        if (file.FileName == obj.Key)
+        {
+          GetObjectRequest request = new GetObjectRequest
+          {
+            BucketName = _bucketName,
+            Key = WebUtility.HtmlDecode(fileId).ToLowerInvariant()
+          };
+          using var response = await _awsS3Client.GetObjectAsync(request);
+
+          using (var fileStream = File.Create(filePath))
+          {
+            await response.ResponseStream.CopyToAsync(fileStream);
+          }
+        }
+      }
+    }
     byte[] result = System.Text.Encoding.UTF8.GetBytes(filePath);
     return result;
   }

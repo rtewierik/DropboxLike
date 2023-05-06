@@ -1,7 +1,5 @@
 
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Amazon.S3;
 public class FileModel
 {
   [Key]
