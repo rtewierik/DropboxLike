@@ -5,7 +5,6 @@ using Amazon.S3.Model;
 using Amazon.S3.Transfer;
 using DropboxLike.Domain.Configuration;
 using DropboxLike.Domain.Data;
-using DropboxLike.Domain.Models;
 using DropboxLike.Domain.Models.Response;
 using Microsoft.Extensions.Options;
 
@@ -83,7 +82,7 @@ public class FileRepository : IFileRepository
         .Where(x => x.FileName == fileId)
         .ToList();
 
-    // string results = "SELECT * FROM FileModels WHERE FileName = @fileId";
+    // string matchinResults = "SELECT * FROM FileModels WHERE FileName = @fileId";
 
     List<FileModel> fileModels = new List<FileModel>();
     foreach (var res in results)
@@ -125,17 +124,42 @@ public class FileRepository : IFileRepository
 
   public async Task<S3Response> DeleteFileAsync(string fileId)
   {
-    DeleteObjectRequest request = new DeleteObjectRequest
+    var results = _applicationDbContext.FileModels
+        .Where(x => x.FileName == fileId)
+        .ToList();
+
+    List<FileModel> fileModels = new List<FileModel>();
+    foreach (var res in results)
+    {
+      FileModel item = new FileModel();
+      item.FileName = res.FileName;
+      fileModels.Add(item);
+    }
+
+    ListObjectsV2Request listRequest = new ListObjectsV2Request
     {
       BucketName = _bucketName,
-      Key = WebUtility.HtmlDecode(fileId).ToLowerInvariant()
     };
+    ListObjectsV2Response listResponse = await _awsS3Client.ListObjectsV2Async(listRequest);
 
-    var response = await _awsS3Client.DeleteObjectAsync(request);
+    foreach (S3Object obj in listResponse.S3Objects)
+    {
+      foreach (FileModel file in fileModels)
+      {
+        DeleteObjectRequest request = new DeleteObjectRequest
+        {
+          BucketName = _bucketName,
+          Key = WebUtility.HtmlDecode(fileId).ToLowerInvariant()
+        };
 
-    _response.StatusCode = 204;
-    _response.Message = $"{fileId} has been deleted successfully.";
+        await _awsS3Client.DeleteObjectAsync(request);
+        _applicationDbContext.FileModels.Remove(file);
+        await _applicationDbContext.SaveChangesAsync();
 
+        _response.StatusCode = 204;
+        _response.Message = $"{fileId} has been deleted successfully.";
+      }
+    }
     return _response;
   }
 }

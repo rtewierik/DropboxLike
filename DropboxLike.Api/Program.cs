@@ -14,7 +14,15 @@ builder.Services.Configure<AwsConfiguration>(options =>
 });
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DropboxLikeConn")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DropboxLikeConn"),
+    sqlServerOptionsAction: sqlOptions => 
+    {
+        sqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(30),
+            errorNumbersToAdd: null
+        );
+    }));
 
 // 2. Add lowest layer components, namely repositories.
 builder.Services.AddScoped<DropboxLike.Domain.Repositories.IFileRepository, DropboxLike.Domain.Repositories.FileRepository>();

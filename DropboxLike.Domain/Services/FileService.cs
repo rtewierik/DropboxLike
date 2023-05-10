@@ -22,4 +22,9 @@ public class FileService : IFileService
     {
         return await _fileRepository.DownloadFileAsync(fileId, destinationFolderPath);
     }
+
+    public async Task<S3Response> DeleteSingleFileAsync(string fileId)
+    {
+        return await _fileRepository.DeleteFileAsync(fileId);
+    }
 }

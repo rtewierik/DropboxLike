@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DropboxLike.Domain.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230504103448_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20230510131114_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

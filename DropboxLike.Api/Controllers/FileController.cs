@@ -34,4 +34,12 @@ public class FileController : ControllerBase
 
     return File(file, "application/octet-stream", fileId);
   }
+
+  [HttpDelete]
+  [Route("Delete/{fileId}")]
+  public async Task<IActionResult> DeleteFileAsync(string fileId)
+  {
+    var response = await _fileService.DeleteSingleFileAsync(fileId);
+    return Ok(response);
+  }
 }
