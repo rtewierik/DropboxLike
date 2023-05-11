@@ -6,6 +6,7 @@ using Amazon.S3.Transfer;
 using DropboxLike.Domain.Configuration;
 using DropboxLike.Domain.Data;
 using DropboxLike.Domain.Models.Response;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace DropboxLike.Domain.Repositories;
@@ -79,18 +80,9 @@ public class FileRepository : IFileRepository
     var filePath = Path.Combine(destinationFolderPath, fileId);
 
     var results = _applicationDbContext.FileModels
-        .Where(x => x.FileName == fileId)
-        .ToList();
+        .FirstOrDefault(x => x.FileName == fileId);
 
-    // string matchinResults = "SELECT * FROM FileModels WHERE FileName = @fileId";
-
-    List<FileModel> fileModels = new List<FileModel>();
-    foreach (var res in results)
-    {
-      FileModel item = new FileModel();
-      item.FileName = res.FileName;
-      fileModels.Add(item);
-    }
+    // var results = "SELECT * FROM FileModels WHERE FileName = @fileId";
 
     ListObjectsV2Request listRequest = new ListObjectsV2Request
     {
@@ -100,10 +92,8 @@ public class FileRepository : IFileRepository
 
     foreach (S3Object obj in listResponse.S3Objects)
     {
-      foreach (FileModel file in fileModels)
+      if (results?.FileName == obj.Key)
       {
-        if (file.FileName == obj.Key)
-        {
           GetObjectRequest request = new GetObjectRequest
           {
             BucketName = _bucketName,
@@ -115,7 +105,6 @@ public class FileRepository : IFileRepository
           {
             await response.ResponseStream.CopyToAsync(fileStream);
           }
-        }
       }
     }
     byte[] result = System.Text.Encoding.UTF8.GetBytes(filePath);
@@ -125,16 +114,7 @@ public class FileRepository : IFileRepository
   public async Task<S3Response> DeleteFileAsync(string fileId)
   {
     var results = _applicationDbContext.FileModels
-        .Where(x => x.FileName == fileId)
-        .ToList();
-
-    List<FileModel> fileModels = new List<FileModel>();
-    foreach (var res in results)
-    {
-      FileModel item = new FileModel();
-      item.FileName = res.FileName;
-      fileModels.Add(item);
-    }
+        .FirstOrDefault(x => x.FileName == fileId);
 
     ListObjectsV2Request listRequest = new ListObjectsV2Request
     {
@@ -144,8 +124,9 @@ public class FileRepository : IFileRepository
 
     foreach (S3Object obj in listResponse.S3Objects)
     {
-      foreach (FileModel file in fileModels)
+      if (results?.FileName == obj.Key)
       {
+
         DeleteObjectRequest request = new DeleteObjectRequest
         {
           BucketName = _bucketName,
@@ -153,7 +134,8 @@ public class FileRepository : IFileRepository
         };
 
         await _awsS3Client.DeleteObjectAsync(request);
-        _applicationDbContext.FileModels.Remove(file);
+
+        _applicationDbContext.FileModels.Remove(results);
         await _applicationDbContext.SaveChangesAsync();
 
         _response.StatusCode = 204;
