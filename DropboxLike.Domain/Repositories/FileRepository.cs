@@ -33,12 +33,11 @@ public class FileRepository : IFileRepository
     {
       using (var newMemoryStream = new MemoryStream())
       {
-        file.CopyTo(newMemoryStream);
-        var fileExt = Path.GetExtension(file.Name);
+        await file.CopyToAsync(newMemoryStream);
         var uploadRequest = new TransferUtilityUploadRequest()
         {
           InputStream = newMemoryStream,
-          Key = $"{Guid.NewGuid()}.{fileExt}",
+          Key = $"{Guid.NewGuid()}",
           BucketName = _bucketName,
           ContentType = file.ContentType,
           CannedACL = S3CannedACL.NoACL
@@ -49,13 +48,15 @@ public class FileRepository : IFileRepository
 
         var fileModel = new FileModel
         {
-          FileName = uploadRequest.Key,
+          FileKey = uploadRequest.Key,
+          FileName = file.FileName,
           FileSize = (file.Length).ToString(),
           ContentType = file.ContentType,
           TimeStamp = (DateTime.UtcNow).ToString()
         };
 
         _applicationDbContext.FileModels.Add(fileModel);
+        // TODO: Check if file already exist
         await _applicationDbContext.SaveChangesAsync();
 
         _response.StatusCode = 200;
@@ -77,12 +78,11 @@ public class FileRepository : IFileRepository
 
   public async Task<byte[]> DownloadFileAsync(string fileId, string destinationFolderPath)
   {
-    var filePath = Path.Combine(destinationFolderPath, fileId);
 
-    var results = _applicationDbContext.FileModels
-        .FirstOrDefault(x => x.FileName == fileId);
-
-    // var results = "SELECT * FROM FileModels WHERE FileName = @fileId";
+    var results = await _applicationDbContext.FileModels
+        .FirstOrDefaultAsync(x => x.FileKey == fileId);
+    
+    var filePath = Path.Combine(destinationFolderPath, fileId );
 
     ListObjectsV2Request listRequest = new ListObjectsV2Request
     {
@@ -92,7 +92,7 @@ public class FileRepository : IFileRepository
 
     foreach (S3Object obj in listResponse.S3Objects)
     {
-      if (results?.FileName == obj.Key)
+      if (results?.FileKey == obj.Key)
       {
           GetObjectRequest request = new GetObjectRequest
           {
@@ -113,8 +113,8 @@ public class FileRepository : IFileRepository
 
   public async Task<S3Response> DeleteFileAsync(string fileId)
   {
-    var results = _applicationDbContext.FileModels
-        .FirstOrDefault(x => x.FileName == fileId);
+    var results = await _applicationDbContext.FileModels
+        .FirstOrDefaultAsync(x => x.FileKey == fileId);
 
     ListObjectsV2Request listRequest = new ListObjectsV2Request
     {
@@ -124,7 +124,7 @@ public class FileRepository : IFileRepository
 
     foreach (S3Object obj in listResponse.S3Objects)
     {
-      if (results?.FileName == obj.Key)
+      if (results?.FileKey == obj.Key)
       {
 
         DeleteObjectRequest request = new DeleteObjectRequest
