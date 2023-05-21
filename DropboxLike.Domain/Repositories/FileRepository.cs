@@ -5,9 +5,10 @@ using Amazon.S3.Model;
 using Amazon.S3.Transfer;
 using DropboxLike.Domain.Configuration;
 using DropboxLike.Domain.Data;
-using DropboxLike.Domain.Models.Response;
+using DropboxLike.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using File = DropboxLike.Domain.Models.File;
 
 namespace DropboxLike.Domain.Repositories;
 
@@ -17,8 +18,6 @@ public class FileRepository : IFileRepository
   private readonly ApplicationDbContext _applicationDbContext;
   private readonly IAmazonS3 _awsS3Client;
 
-  private S3Response _response = new();
-
   public FileRepository(IOptions<AwsConfiguration> options, ApplicationDbContext applicationDbContext)
   {
     var configuration = options.Value;
@@ -27,7 +26,7 @@ public class FileRepository : IFileRepository
     _applicationDbContext = applicationDbContext;
   }
 
-  public async Task<S3Response> UploadFileAsync(IFormFile file)
+  public async Task<OperationResult<object>> UploadFileAsync(IFormFile file)
   {
     try
     {
@@ -46,7 +45,7 @@ public class FileRepository : IFileRepository
 
         await transferUtility.UploadAsync(uploadRequest);
 
-        var fileModel = new FileModel
+        var fileModel = new FileEntity
         {
           FileKey = uploadRequest.Key,
           FileName = file.FileName,
@@ -58,90 +57,113 @@ public class FileRepository : IFileRepository
         _applicationDbContext.FileModels.Add(fileModel);
         // TODO: Check if file already exist
         await _applicationDbContext.SaveChangesAsync();
-
-        _response.StatusCode = 200;
-        _response.Message = $"{file.Name} has been uploaded to s3 successfully";
+        
+        return OperationResult<object>.SuccessResult(new object());
       }
     }
-    catch (AmazonS3Exception ex)
+    catch (AmazonS3Exception exception)
     {
-      _response.StatusCode = (int)ex.StatusCode;
-      _response.Message = ex.Message;
+      var message = $"{exception.StatusCode}: {exception.Message}";
+      return OperationResult<object>.ExceptionResult(exception, message);
     }
-    catch (Exception ex)
+    catch (Exception exception)
     {
-      _response.StatusCode = 500;
-      _response.Message = ex.Message;
+      var message = $"500: {exception.Message}";
+      return OperationResult<object>.ExceptionResult(exception, message);
     }
-    return _response;
   }
 
-  public async Task<byte[]> DownloadFileAsync(string fileId, string destinationFolderPath)
+  public async Task<OperationResult<File>> DownloadFileAsync(string fileId)
   {
+    // var results = await _applicationDbContext.FileModels
+    //     .FirstOrDefaultAsync(x => x.FileKey == fileId);
 
-    var results = await _applicationDbContext.FileModels
-        .FirstOrDefaultAsync(x => x.FileKey == fileId);
-    
-    var filePath = Path.Combine(destinationFolderPath, fileId );
+    //var destinationFolderPath = $"/home/godfreyowidi/Downloads/TestsDowloads";
 
-    ListObjectsV2Request listRequest = new ListObjectsV2Request
+    try
     {
-      BucketName = _bucketName,
-    };
-    ListObjectsV2Response listResponse = await _awsS3Client.ListObjectsV2Async(listRequest);
+      var file = await _applicationDbContext.FileModels.FindAsync(fileId);
 
-    foreach (S3Object obj in listResponse.S3Objects)
-    {
-      if (results?.FileKey == obj.Key)
+      if (file == null)
       {
+        throw new FileNotFoundException("File not Found");
+      }
+
+      var objectKey = file?.FileKey?.ToString();
+
+      ListObjectsV2Request listRequest = new ListObjectsV2Request
+      {
+        BucketName = _bucketName,
+      };
+      ListObjectsV2Response listResponse = await _awsS3Client.ListObjectsV2Async(listRequest);
+
+      foreach (S3Object obj in listResponse.S3Objects)
+      {
+        if (file?.FileKey == obj.Key)
+        {
+          var downloadFileName = file.FileName;
           GetObjectRequest request = new GetObjectRequest
           {
             BucketName = _bucketName,
-            Key = WebUtility.HtmlDecode(fileId).ToLowerInvariant()
+            Key = WebUtility.HtmlDecode(objectKey)?.ToLowerInvariant(),
+            ResponseHeaderOverrides = new ResponseHeaderOverrides
+            {
+              ContentDisposition = $"attachment; filename=\"{downloadFileName}\""
+            }
           };
           using var response = await _awsS3Client.GetObjectAsync(request);
-
-          using (var fileStream = File.Create(filePath))
           {
-            await response.ResponseStream.CopyToAsync(fileStream);
+            var contentType = response.Headers.ContentType;
+            return OperationResult<File>.SuccessResult(new File
+            {
+              FileStream = response.ResponseStream,
+              ContentType = contentType
+            });
           }
+        }
       }
+
+      return OperationResult<File>.FailureResult("404: File not found.");
     }
-    byte[] result = System.Text.Encoding.UTF8.GetBytes(filePath);
-    return result;
+    catch (AmazonS3Exception exception)
+    {
+      var message = $"{exception.StatusCode}: {exception.Message}";
+      return OperationResult<File>.ExceptionResult(exception, message);
+    }
+    catch (Exception exception)
+    {
+      var message = $"500: {exception.Message}";
+      return OperationResult<File>.ExceptionResult(exception, message);
+    }
   }
 
-  public async Task<S3Response> DeleteFileAsync(string fileId)
+  public async Task<OperationResult<object>> DeleteFileAsync(string fileId)
   {
     var results = await _applicationDbContext.FileModels
         .FirstOrDefaultAsync(x => x.FileKey == fileId);
 
-    ListObjectsV2Request listRequest = new ListObjectsV2Request
+    var listRequest = new ListObjectsV2Request
     {
       BucketName = _bucketName,
     };
-    ListObjectsV2Response listResponse = await _awsS3Client.ListObjectsV2Async(listRequest);
+    var listResponse = await _awsS3Client.ListObjectsV2Async(listRequest);
 
-    foreach (S3Object obj in listResponse.S3Objects)
+    foreach (var obj in listResponse.S3Objects)
     {
-      if (results?.FileKey == obj.Key)
+      if (results?.FileKey != obj.Key) continue;
+      var request = new DeleteObjectRequest
       {
+        BucketName = _bucketName,
+        Key = WebUtility.HtmlDecode(fileId).ToLowerInvariant()
+      };
 
-        DeleteObjectRequest request = new DeleteObjectRequest
-        {
-          BucketName = _bucketName,
-          Key = WebUtility.HtmlDecode(fileId).ToLowerInvariant()
-        };
+      await _awsS3Client.DeleteObjectAsync(request);
 
-        await _awsS3Client.DeleteObjectAsync(request);
-
-        _applicationDbContext.FileModels.Remove(results);
-        await _applicationDbContext.SaveChangesAsync();
-
-        _response.StatusCode = 204;
-        _response.Message = $"{fileId} has been deleted successfully.";
-      }
+      _applicationDbContext.FileModels.Remove(results);
+      await _applicationDbContext.SaveChangesAsync();
+      
+      return OperationResult<object>.FailureResult($"204: File with ID {fileId} has been deleted successfully.");
     }
-    return _response;
+    return OperationResult<object>.FailureResult("404: File not found.");
   }
 }
