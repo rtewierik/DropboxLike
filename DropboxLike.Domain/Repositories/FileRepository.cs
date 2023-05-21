@@ -6,6 +6,7 @@ using Amazon.S3.Transfer;
 using DropboxLike.Domain.Configuration;
 using DropboxLike.Domain.Data;
 using DropboxLike.Domain.Models.Response;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -76,39 +77,64 @@ public class FileRepository : IFileRepository
     return _response;
   }
 
-  public async Task<byte[]> DownloadFileAsync(string fileId, string destinationFolderPath)
+  public async Task<FileStreamResult> DownloadFileAsync(string fileId)
   {
 
-    var results = await _applicationDbContext.FileModels
-        .FirstOrDefaultAsync(x => x.FileKey == fileId);
-    
-    var filePath = Path.Combine(destinationFolderPath, fileId );
+    // var results = await _applicationDbContext.FileModels
+    //     .FirstOrDefaultAsync(x => x.FileKey == fileId);
 
-    ListObjectsV2Request listRequest = new ListObjectsV2Request
-    {
-      BucketName = _bucketName,
-    };
-    ListObjectsV2Response listResponse = await _awsS3Client.ListObjectsV2Async(listRequest);
+    //var destinationFolderPath = $"/home/godfreyowidi/Downloads/TestsDowloads";
 
-    foreach (S3Object obj in listResponse.S3Objects)
+    try
     {
-      if (results?.FileKey == obj.Key)
+      var file = await _applicationDbContext.FileModels.FindAsync(fileId);
+
+      if (file == null)
       {
+        throw new FileNotFoundException("File not Found");
+      }
+
+      var objectKey = file?.FileKey?.ToString();
+
+      ListObjectsV2Request listRequest = new ListObjectsV2Request
+      {
+        BucketName = _bucketName,
+      };
+      ListObjectsV2Response listResponse = await _awsS3Client.ListObjectsV2Async(listRequest);
+
+      foreach (S3Object obj in listResponse.S3Objects)
+      {
+        if (file?.FileKey == obj.Key)
+        {
+          var downloadFileName = file.FileName;
           GetObjectRequest request = new GetObjectRequest
           {
             BucketName = _bucketName,
-            Key = WebUtility.HtmlDecode(fileId).ToLowerInvariant()
+            Key = WebUtility.HtmlDecode(objectKey)?.ToLowerInvariant(),
+            ResponseHeaderOverrides = new ResponseHeaderOverrides
+            {
+              ContentDisposition = $"attachment; filename=\"{downloadFileName}\""
+            }
           };
           using var response = await _awsS3Client.GetObjectAsync(request);
-
-          using (var fileStream = File.Create(filePath))
           {
-            await response.ResponseStream.CopyToAsync(fileStream);
+            var contentType = response.Headers.ContentType;
+            return new FileStreamResult(response.ResponseStream, contentType);
           }
+        }
       }
     }
-    byte[] result = System.Text.Encoding.UTF8.GetBytes(filePath);
-    return result;
+    catch (AmazonS3Exception ex)
+    {
+      _response.StatusCode = (int)ex.StatusCode;
+      _response.Message = ex.Message;
+    }
+    catch (Exception ex)
+    {
+      _response.StatusCode = 500;
+      _response.Message = ex.Message;
+    }
+    return null;
   }
 
   public async Task<S3Response> DeleteFileAsync(string fileId)
