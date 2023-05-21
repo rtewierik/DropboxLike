@@ -83,7 +83,6 @@ public class FileRepository : IFileRepository
     try
     {
       var file = await _applicationDbContext.FileModels.FindAsync(fileId);
-
       if (file == null)
       {
         throw new FileNotFoundException("File not Found");
