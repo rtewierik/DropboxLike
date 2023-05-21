@@ -1,6 +1,7 @@
 using DropboxLike.Domain.Models;
 using DropboxLike.Domain.Models.Response;
 using DropboxLike.Domain.Repositories;
+using Microsoft.AspNetCore.Mvc;
 
 namespace DropboxLike.Domain.Services;
 
@@ -18,9 +19,9 @@ public class FileService : IFileService
         return await _fileRepository.UploadFileAsync(file);
     }
 
-    public async Task<byte[]> DownloadSingleFileAsync(string fileId, string destinationFolderPath)
+    public async Task<FileStreamResult> DownloadSingleFileAsync(string fileId)
     {
-        return await _fileRepository.DownloadFileAsync(fileId, destinationFolderPath);
+        return await _fileRepository.DownloadFileAsync(fileId);
     }
 
     public async Task<S3Response> DeleteSingleFileAsync(string fileId)

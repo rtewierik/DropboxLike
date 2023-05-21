@@ -28,11 +28,11 @@ public class FileController : ControllerBase
   [Route("Download/{fileId}")]
   public async Task<IActionResult> DownloadFileAsync(string fileId)
   {
-    var destinationFolderPath = $"/home/godfreyowidi/Downloads/TestsDowloads";
+    // var destinationFolderPath = $"/home/godfreyowidi/Downloads/TestsDowloads";
 
-    var file = await _fileService.DownloadSingleFileAsync(fileId, destinationFolderPath);
+    var file = await _fileService.DownloadSingleFileAsync(fileId);
 
-    return File(file, "application/octet-stream", fileId);
+    return Ok();
   }
 
   [HttpDelete]
