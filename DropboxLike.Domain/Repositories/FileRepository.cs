@@ -55,7 +55,6 @@ public class FileRepository : IFileRepository
         };
 
         _applicationDbContext.FileModels.Add(fileModel);
-        // TODO: Check if file already exist
         await _applicationDbContext.SaveChangesAsync();
         
         return OperationResult<object>.SuccessResult(new object());
@@ -78,7 +77,7 @@ public class FileRepository : IFileRepository
     // var results = await _applicationDbContext.FileModels
     //     .FirstOrDefaultAsync(x => x.FileKey == fileId);
 
-    //var destinationFolderPath = $"/home/godfreyowidi/Downloads/TestsDowloads";
+    var destinationFolderPath = $"/home/godfreyowidi/Downloads/DropboxLike";
 
     try
     {
@@ -104,14 +103,16 @@ public class FileRepository : IFileRepository
           GetObjectRequest request = new GetObjectRequest
           {
             BucketName = _bucketName,
-            Key = WebUtility.HtmlDecode(objectKey)?.ToLowerInvariant(),
-            ResponseHeaderOverrides = new ResponseHeaderOverrides
-            {
-              ContentDisposition = $"attachment; filename=\"{downloadFileName}\""
-            }
+            Key = WebUtility.HtmlDecode(objectKey)?.ToLowerInvariant()
           };
           using var response = await _awsS3Client.GetObjectAsync(request);
           {
+            var filePath = Path.Combine(destinationFolderPath, downloadFileName);
+
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+              await response.ResponseStream.CopyToAsync(fileStream);
+            }
             var contentType = response.Headers.ContentType;
             return OperationResult<File>.SuccessResult(new File
             {
