@@ -1,6 +1,7 @@
 using DropboxLike.Domain.Configuration;
 using DropboxLike.Domain.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +30,13 @@ builder.Services.AddScoped<DropboxLike.Domain.Repositories.IFileRepository, Drop
 
 // 3. Add higher layer components, namely services.
 builder.Services.AddScoped<DropboxLike.Domain.Services.IFileService, DropboxLike.Domain.Services.FileService>();
+
+// 4. Register the IMemoryCache as a singleton
+builder.Services.Configure<MemoryCacheOptions>(options =>
+{
+    options.ExpirationScanFrequency = TimeSpan.FromMinutes(1);
+});
+builder.Services.AddSingleton(typeof(IMemoryCache), typeof(MemoryCache));
 
 // 4. Add even higher layer components, namely controllers and the related authorization and authentication.
 builder.Services.AddAuthorization();

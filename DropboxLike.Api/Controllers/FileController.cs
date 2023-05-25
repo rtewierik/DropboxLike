@@ -25,12 +25,6 @@ public class FileController : ControllerBase
     var response = await _fileService.UploadSingleFileAsync(file);
 
     return StatusCode(response.StatusCode);
-
-    
-    // TODO: Find a way to return result with correct status code (in case of failure 404, 500, et cetera) using output of FileService call).
-
-    return Ok(response.Successful);
-
   }
 
   [HttpGet]
