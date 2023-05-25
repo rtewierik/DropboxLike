@@ -23,7 +23,14 @@ public class FileController : ControllerBase
   public async Task<IActionResult> UploadFileAsync(IFormFile file)
   {
     var response = await _fileService.UploadSingleFileAsync(file);
+
     return StatusCode(response.StatusCode);
+
+    
+    // TODO: Find a way to return result with correct status code (in case of failure 404, 500, et cetera) using output of FileService call).
+
+    return Ok(response.Successful);
+
   }
 
   [HttpGet]
@@ -31,6 +38,7 @@ public class FileController : ControllerBase
   public async Task<IActionResult> DownloadFileAsync(string fileId)
   {
     var response = await _fileService.DownloadSingleFileAsync(fileId);
+
     if (!response.IsSuccessful)
     {
       var message = $"Failed to download file with ID {fileId} due to '{response.FailureMessage ?? "<>"}'";

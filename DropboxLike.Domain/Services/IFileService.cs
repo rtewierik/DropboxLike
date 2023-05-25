@@ -8,4 +8,5 @@ public interface IFileService
     Task<OperationResult<object>> UploadSingleFileAsync(IFormFile file);
     Task<OperationResult<File>> DownloadSingleFileAsync(string fileId);
     Task<OperationResult<object>> DeleteSingleFileAsync(string fileId);
+    //FileModel GetObjectByIdAsync(string fileId);
 }
