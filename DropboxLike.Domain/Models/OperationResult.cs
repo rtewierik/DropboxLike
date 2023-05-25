@@ -1,53 +1,76 @@
-﻿namespace DropboxLike.Domain.Models;
+﻿using System.Net;
+
+namespace DropboxLike.Domain.Models;
 
 public class OperationResult<T>
 {
-    public bool Successful { get; protected set; }
-    public T? Result { get; protected set; }
-    public string? FailureMessage { get; protected set; }
-    public Exception? Exception { get; protected set; }
+    public T Value => GetValue();
+    public readonly int StatusCode;
+    public Exception Exception => GetException();
+    public bool IsSuccessful { get; }
+    public string? FailureMessage { get; }
     
-    protected OperationResult(T result)
+    private readonly T? _value;
+    private readonly Exception? _exception;
+    
+    public static OperationResult<T> Success(T result, HttpStatusCode? statusCode = null) =>
+        new(result, statusCode);
+    
+    public static OperationResult<T> Fail(string message, HttpStatusCode? statusCode = null) =>
+        new(message, statusCode);
+    
+    public static OperationResult<T> Fail(
+        Exception exception,
+        string? message = null,
+        HttpStatusCode? statusCode = null
+    ) => new(exception, message, statusCode);
+    
+    private OperationResult(T value, HttpStatusCode? statusCode)
     {
-        Successful = true;
-        Result = result;
+        _value = value;
+        _exception = null;
+        StatusCode = GetStatusCode(statusCode ?? HttpStatusCode.OK);
+        IsSuccessful = true;
         FailureMessage = null;
-        Exception = null;
     }
     
-    protected OperationResult(string message)
+    private OperationResult(string message, HttpStatusCode? statusCode)
     {
-        Successful = false;
+        _value = default;
+        _exception = null;
+        StatusCode = GetStatusCode(statusCode ?? HttpStatusCode.InternalServerError);
+        IsSuccessful = false;
         FailureMessage = message;
-        Exception = null;
-        Result = default;
     }
     
-    protected OperationResult(Exception exception, string? message = null)
+    private OperationResult(Exception exception, string? message, HttpStatusCode? statusCode)
     {
-        Successful = false;
-        Exception = exception;
+        _value = default;
+        _exception = exception;
+        StatusCode = GetStatusCode(statusCode ?? HttpStatusCode.InternalServerError);
+        IsSuccessful = false;
         FailureMessage = message ?? exception.Message;
-        Result = default;
     }
-    
-    public static OperationResult<T> SuccessResult(T result)
+
+    private static int GetStatusCode(HttpStatusCode statusCode) => (int)statusCode;
+
+    private T GetValue()
     {
-        return new OperationResult<T>(result);
+        if (_value is null)
+        {
+            throw new InvalidOperationException("Value is not available!");
+        }
+
+        return _value;
     }
-    
-    public static OperationResult<T> FailureResult(string message)
+
+    private Exception GetException()
     {
-        return new OperationResult<T>(message);
-    }
-    
-    public static OperationResult<T> ExceptionResult(Exception exception, string? message = null)
-    {
-        return new OperationResult<T>(exception, message);
-    }
-    
-    public bool IsException()
-    {
-        return Exception != null;
+        if (_exception is null)
+        {
+            throw new InvalidOperationException("Exception is not available!");
+        }
+
+        return _exception;
     }
 }

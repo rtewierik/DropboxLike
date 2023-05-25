@@ -23,10 +23,14 @@ public class FileController : ControllerBase
   public async Task<IActionResult> UploadFileAsync(IFormFile file)
   {
     var response = await _fileService.UploadSingleFileAsync(file);
+
+    return StatusCode(response.StatusCode);
+
     
     // TODO: Find a way to return result with correct status code (in case of failure 404, 500, et cetera) using output of FileService call).
 
     return Ok(response.Successful);
+
   }
 
   [HttpGet]
@@ -34,22 +38,14 @@ public class FileController : ControllerBase
   public async Task<IActionResult> DownloadFileAsync(string fileId)
   {
     var response = await _fileService.DownloadSingleFileAsync(fileId);
-    try
+
+    if (!response.IsSuccessful)
     {
-      if (response.Successful)
-      {
-        var file = response.Result;
-        return new FileStreamResult(file.FileStream, file.ContentType);
-      }
-      else
-      {
-        return BadRequest($"Failed to read, {fileId}: {response.FailureMessage!}");
-      }
+      var message = $"Failed to download file with ID {fileId} due to '{response.FailureMessage ?? "<>"}'";
+      return StatusCode(response.StatusCode, message);
     }
-    catch (Exception ex)
-    {
-      return StatusCode(StatusCodes.Status500InternalServerError, $"Failed to read, {fileId}: {ex.Data}-{response.Exception}");
-    }
+    var file = response.Value;
+    return new FileStreamResult(file.FileStream, file.ContentType);
   }
 
   [HttpDelete]
@@ -57,9 +53,8 @@ public class FileController : ControllerBase
   public async Task<IActionResult> DeleteFileAsync(string fileId)
   {
     var response = await _fileService.DeleteSingleFileAsync(fileId);
-    
-    // TODO: Find a way to return result with correct status code (in case of failure 404, 500, et cetera) using output of FileService call).
-    
-    return Ok(response);
+    if (response.IsSuccessful) return NoContent();
+    var message = $"Failed to delete file with ID {fileId} due to '{response.FailureMessage ?? "<>"}'";
+    return StatusCode(response.StatusCode, message);
   }
 }

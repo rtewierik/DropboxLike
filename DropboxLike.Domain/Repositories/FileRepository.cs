@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using Amazon;
 using Amazon.S3;
@@ -33,7 +34,7 @@ public class FileRepository : IFileRepository
       using (var newMemoryStream = new MemoryStream())
       {
         await file.CopyToAsync(newMemoryStream);
-        var uploadRequest = new TransferUtilityUploadRequest()
+        var uploadRequest = new TransferUtilityUploadRequest
         {
           InputStream = newMemoryStream,
           Key = $"{Guid.NewGuid()}",
@@ -49,26 +50,26 @@ public class FileRepository : IFileRepository
         {
           FileKey = uploadRequest.Key,
           FileName = file.FileName,
-          FileSize = (file.Length).ToString(),
+          FileSize = file.Length.ToString(),
           ContentType = file.ContentType,
-          TimeStamp = (DateTime.UtcNow).ToString()
+          TimeStamp = DateTime.UtcNow.ToString(CultureInfo.InvariantCulture)
         };
 
         _applicationDbContext.FileModels.Add(fileModel);
         await _applicationDbContext.SaveChangesAsync();
         
-        return OperationResult<object>.SuccessResult(new object());
+        return OperationResult<object>.Success(new object(), HttpStatusCode.Created);
       }
     }
     catch (AmazonS3Exception exception)
     {
       var message = $"{exception.StatusCode}: {exception.Message}";
-      return OperationResult<object>.ExceptionResult(exception, message);
+      return OperationResult<object>.Fail(exception, message, exception.StatusCode);
     }
     catch (Exception exception)
     {
-      var message = $"500: {exception.Message}";
-      return OperationResult<object>.ExceptionResult(exception, message);
+      var message = $"{HttpStatusCode.InternalServerError}: {exception.Message}";
+      return OperationResult<object>.Fail(exception, message);
     }
   }
 
@@ -87,15 +88,15 @@ public class FileRepository : IFileRepository
         throw new FileNotFoundException("File not Found");
       }
 
-      var objectKey = file?.FileKey?.ToString();
+      var objectKey = file.FileKey;
 
-      ListObjectsV2Request listRequest = new ListObjectsV2Request
+      var listRequest = new ListObjectsV2Request
       {
         BucketName = _bucketName,
       };
-      ListObjectsV2Response listResponse = await _awsS3Client.ListObjectsV2Async(listRequest);
+      var listResponse = await _awsS3Client.ListObjectsV2Async(listRequest);
 
-      foreach (S3Object obj in listResponse.S3Objects)
+      foreach (var obj in listResponse.S3Objects)
       {
         if (file?.FileKey == obj.Key)
         {
@@ -114,7 +115,7 @@ public class FileRepository : IFileRepository
               await response.ResponseStream.CopyToAsync(fileStream);
             }
             var contentType = response.Headers.ContentType;
-            return OperationResult<File>.SuccessResult(new File
+            return OperationResult<File>.Success(new File
             {
               FileStream = response.ResponseStream,
               ContentType = contentType
@@ -123,17 +124,17 @@ public class FileRepository : IFileRepository
         }
       }
 
-      return OperationResult<File>.FailureResult("404: File not found.");
+      return OperationResult<File>.Fail($"{HttpStatusCode.NotFound}: File not found.", HttpStatusCode.NotFound);
     }
     catch (AmazonS3Exception exception)
     {
       var message = $"{exception.StatusCode}: {exception.Message}";
-      return OperationResult<File>.ExceptionResult(exception, message);
+      return OperationResult<File>.Fail(exception, message, exception.StatusCode);
     }
     catch (Exception exception)
     {
-      var message = $"500: {exception.Message}";
-      return OperationResult<File>.ExceptionResult(exception, message);
+      var message = $"{HttpStatusCode.InternalServerError}: {exception.Message}";
+      return OperationResult<File>.Fail(exception, message);
     }
   }
 
@@ -162,8 +163,8 @@ public class FileRepository : IFileRepository
       _applicationDbContext.FileModels.Remove(results);
       await _applicationDbContext.SaveChangesAsync();
       
-      return OperationResult<object>.FailureResult($"204: File with ID {fileId} has been deleted successfully.");
+      return OperationResult<object>.Success(new object(), HttpStatusCode.NoContent);
     }
-    return OperationResult<object>.FailureResult("404: File not found.");
+    return OperationResult<object>.Fail($"{HttpStatusCode.NotFound}: File not found.", HttpStatusCode.NotFound);
   }
 }
