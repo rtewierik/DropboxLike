@@ -1,6 +1,9 @@
-using DropboxLike.Domain.Configuration;
+using DropboxLike.Domain.Models;
+using DropboxLike.Domain.Repositories;
 using DropboxLike.Domain.Services;
 using Microsoft.AspNetCore.Mvc;
+using File = DropboxLike.Domain.Models.File;
+
 
 namespace DropboxLike.Api.Controllers;
 
@@ -21,18 +24,22 @@ public class FileController : ControllerBase
   {
     var response = await _fileService.UploadSingleFileAsync(file);
 
-    return Ok(response);
+    return StatusCode(response.StatusCode);
   }
 
   [HttpGet]
   [Route("Download/{fileId}")]
   public async Task<IActionResult> DownloadFileAsync(string fileId)
   {
-    // var destinationFolderPath = $"/home/godfreyowidi/Downloads/TestsDowloads";
+    var response = await _fileService.DownloadSingleFileAsync(fileId);
 
-    var file = await _fileService.DownloadSingleFileAsync(fileId);
-
-    return Ok();
+    if (!response.IsSuccessful)
+    {
+      var message = $"Failed to download file with ID {fileId} due to '{response.FailureMessage ?? "<>"}'";
+      return StatusCode(response.StatusCode, message);
+    }
+    var file = response.Value;
+    return new FileStreamResult(file.FileStream, file.ContentType);
   }
 
   [HttpDelete]
@@ -40,6 +47,8 @@ public class FileController : ControllerBase
   public async Task<IActionResult> DeleteFileAsync(string fileId)
   {
     var response = await _fileService.DeleteSingleFileAsync(fileId);
-    return Ok(response);
+    if (response.IsSuccessful) return NoContent();
+    var message = $"Failed to delete file with ID {fileId} due to '{response.FailureMessage ?? "<>"}'";
+    return StatusCode(response.StatusCode, message);
   }
 }

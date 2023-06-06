@@ -1,6 +1,6 @@
 
 using System.ComponentModel.DataAnnotations;
-public class FileModel
+public class FileEntity
 {
   [Key]
   public string? FileKey { get; set; }
