@@ -27,4 +27,9 @@ public class FileService : IFileService
     {
         return await _fileRepository.DeleteFileAsync(fileId);
     }
+
+    public async Task<List<FileEntity>> ListBucketFilesAsync()
+    {
+        return await _fileRepository.ListFilesAsync();
+    }
 }

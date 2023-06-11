@@ -5,6 +5,15 @@ using Microsoft.Extensions.Caching.Memory;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var region = Environment.GetEnvironmentVariable("AWS_REGION");
+var secret = Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY");
+var access = Environment.GetEnvironmentVariable("AWS_ACCESS_KEY");
+
+Console.WriteLine("AWS_REGION: " + region);
+Console.WriteLine("AWS_SECRET: " + secret);
+Console.WriteLine("AWS_KEY: " + access);
+
+
 // 1. Add configuration.
 builder.Services.Configure<AwsConfiguration>(options =>
 {
@@ -31,13 +40,6 @@ builder.Services.AddScoped<DropboxLike.Domain.Repositories.IFileRepository, Drop
 // 3. Add higher layer components, namely services.
 builder.Services.AddScoped<DropboxLike.Domain.Services.IFileService, DropboxLike.Domain.Services.FileService>();
 
-// 4. Register the IMemoryCache as a singleton
-builder.Services.Configure<MemoryCacheOptions>(options =>
-{
-    options.ExpirationScanFrequency = TimeSpan.FromMinutes(1);
-});
-builder.Services.AddSingleton(typeof(IMemoryCache), typeof(MemoryCache));
-
 // 4. Add even higher layer components, namely controllers and the related authorization and authentication.
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
@@ -56,9 +58,6 @@ app.UseRouting();
 
 app.UseAuthorization();
 
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapControllers();
-});
+app.MapControllers();
 
 app.Run();

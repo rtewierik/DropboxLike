@@ -42,6 +42,21 @@ public class FileController : ControllerBase
     return new FileStreamResult(file.FileStream, file.ContentType);
   }
 
+  [HttpGet]
+  [Route("List")]
+  public async Task<IActionResult> ListFilesAsync()
+  {
+    var response = await _fileService.ListBucketFilesAsync();
+    
+    if (!response.IsSuccessful)
+    {
+      var message = $"Due to '{response.FailureMessage ?? "<>"}', your list was not loaded. Refresh your page!";
+      return StatusCode(response.StatusCode, message);
+    }
+    
+    return Ok(response.Result);
+  }
+
   [HttpDelete]
   [Route("Delete/{fileId}")]
   public async Task<IActionResult> DeleteFileAsync(string fileId)

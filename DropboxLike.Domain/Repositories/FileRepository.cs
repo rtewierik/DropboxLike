@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Linq;
 using System.Net;
 using Amazon;
 using Amazon.S3;
@@ -19,14 +20,12 @@ public class FileRepository : IFileRepository
   private readonly string _bucketName;
   private readonly ApplicationDbContext _applicationDbContext;
   private readonly IAmazonS3 _awsS3Client;
-  private readonly IMemoryCache _memoryCache;
-  public FileRepository(IOptions<AwsConfiguration> options, ApplicationDbContext applicationDbContext, IMemoryCache memoryCache)
+  public FileRepository(IOptions<AwsConfiguration> options, ApplicationDbContext applicationDbContext)
   {
     var configuration = options.Value;
     _bucketName = configuration.BucketName;
     _awsS3Client = new AmazonS3Client(configuration.AwsAccessKey, configuration.AwsSecretAccessKey, RegionEndpoint.GetBySystemName(configuration.Region));
     _applicationDbContext = applicationDbContext;
-    _memoryCache = memoryCache;
 
   }
 
@@ -60,7 +59,7 @@ public class FileRepository : IFileRepository
 
         _applicationDbContext.FileModels.Add(fileModel);
         await _applicationDbContext.SaveChangesAsync();
-        
+
         return OperationResult<object>.Success(new object(), HttpStatusCode.Created);
       }
     }
@@ -90,29 +89,18 @@ public class FileRepository : IFileRepository
       {
         BucketName = _bucketName,
       };
-      if (_memoryCache.TryGetValue<List<string>>(_bucketName, out var fileNames))
-      {
-        var fileCache = new File
-        {
-          ObjectNames = fileNames
-        };
-        return OperationResult<File>.Success(fileCache);
-      }
-      fileNames = new List<string>();
-      
+
+      var fileNames = new List<string>();
+
       ListObjectsV2Response listResponse;
       do
       {
-        listResponse =  await _awsS3Client.ListObjectsV2Async(listRequest);
-        
+        listResponse = await _awsS3Client.ListObjectsV2Async(listRequest);
+
         fileNames.AddRange(listResponse.S3Objects.Select(obj => obj.Key));
 
         listRequest.ContinuationToken = listResponse.NextContinuationToken;
       } while (listResponse.IsTruncated);
-
-      var cacheOptions = new MemoryCacheEntryOptions().SetSlidingExpiration(TimeSpan.FromMinutes(10));
-
-      _memoryCache.Set(_bucketName, fileNames, cacheOptions);
 
       foreach (var obj in fileNames)
       {
@@ -120,29 +108,7 @@ public class FileRepository : IFileRepository
         {
           var downloadFileName = file.FileName;
           var filePath = Path.Combine("/home/godfreyowidi/Downloads/DropboxLike", downloadFileName);
-          
-          // Check if a file with the same name already exists
-          if (System.IO.File.Exists(filePath))
-          {
-            var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(downloadFileName);
-            var fileExtension = Path.GetExtension(downloadFileName);
 
-            string newFileName;
-            string newFilePath;
-
-            int suffixCounter = 1;
-
-            do
-            {
-              newFileName = $"{fileNameWithoutExtension}({suffixCounter}){fileExtension}";
-              newFilePath = Path.Combine("/home/godfreyowidi/Downloads/DropboxLike", newFileName);
-              
-              // Increment the counter
-              suffixCounter++;
-            } while (System.IO.File.Exists(newFilePath));
-
-            filePath = newFilePath;
-          }
           GetObjectRequest request = new GetObjectRequest
           {
             BucketName = _bucketName,
@@ -179,6 +145,20 @@ public class FileRepository : IFileRepository
     }
   }
 
+  public async Task<List<FileEntity>> ListFilesAsync()
+  {
+    try
+    {
+      var files = await _applicationDbContext.FileModels.ToListAsync();
+      return OperationResult<List<FileEntity>>.SuccessList(files);
+    }
+    catch (Exception exception)
+    {
+      var message = $"{HttpStatusCode.InternalServerError}: {exception.Message}";
+      return OperationResult<List<FileEntity>>.Fail(exception, message);
+    }
+  }
+
   public async Task<OperationResult<object>> DeleteFileAsync(string fileId)
   {
     var results = await _applicationDbContext.FileModels
@@ -203,7 +183,7 @@ public class FileRepository : IFileRepository
 
       _applicationDbContext.FileModels.Remove(results);
       await _applicationDbContext.SaveChangesAsync();
-      
+
       return OperationResult<object>.Success(new object(), HttpStatusCode.NoContent);
     }
     return OperationResult<object>.Fail($"{HttpStatusCode.NotFound}: File not found.", HttpStatusCode.NotFound);
