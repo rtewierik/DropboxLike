@@ -5,6 +5,7 @@ namespace DropboxLike.Domain.Models;
 public class OperationResult<T>
 {
     public T Value => GetValue();
+
     public readonly int StatusCode;
     public Exception Exception => GetException();
     public bool IsSuccessful { get; }
@@ -12,10 +13,10 @@ public class OperationResult<T>
     
     private readonly T? _value;
     private readonly Exception? _exception;
-    
+
     public static OperationResult<T> Success(T result, HttpStatusCode? statusCode = null) =>
         new(result, statusCode);
-    
+
     public static OperationResult<T> Fail(string message, HttpStatusCode? statusCode = null) =>
         new(message, statusCode);
     

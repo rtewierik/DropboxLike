@@ -8,4 +8,5 @@ public interface IFileRepository
   Task<OperationResult<object>> UploadFileAsync(IFormFile file);
   Task<OperationResult<File>> DownloadFileAsync(string fileId);
   Task<OperationResult<object>> DeleteFileAsync(string fileId);
+  Task<OperationResult<List<FileEntity>>> ListFilesAsync();
 }
