@@ -1,5 +1,5 @@
 using DropboxLike.Domain.Data.Entities;
-using Microsoft.AspNetCore.Identity;
+using DropboxLike.Domain.Services.User;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DropboxLike.Api.Controllers;
@@ -8,11 +8,11 @@ namespace DropboxLike.Api.Controllers;
 [ApiController]
 public class AuthenticationController : ControllerBase
 {
-    private readonly UserManager<UserEntity> _userManager;
+    private readonly IUserService _userService;
 
-    public AuthenticationController(UserManager<UserEntity> userManager)
+    public AuthenticationController(IUserService userService)
     {
-        _userManager = userManager;
+        _userService = userService;
     }
 
     [HttpPost("register")]
@@ -20,18 +20,18 @@ public class AuthenticationController : ControllerBase
     {
         if (ModelState.IsValid)
         {
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(userEntity.Password);
             var user = new UserEntity
-                { FirstName = userEntity.FirstName, LastName = userEntity.LastName, Email = userEntity.Email };
-            var result = await _userManager.CreateAsync(user, userEntity.Password);
+                { FirstName = userEntity.FirstName, LastName = userEntity.LastName, Email = userEntity.Email, Password = hashedPassword };
 
-            if (result.Succeeded)
+            var result = await _userService.RegisterUser(user);
+
+            if (result.IsSuccessful)
             {
                 return Ok();
             }
-            else
-            {
-                return BadRequest(result.Errors);
-            }
+
+            return BadRequest(new { Message = result.FailureMessage });
         }
 
         return BadRequest(ModelState);
