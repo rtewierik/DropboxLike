@@ -26,7 +26,6 @@ public class FileRepository : IFileRepository
     _bucketName = configuration.BucketName;
     _awsS3Client = new AmazonS3Client(configuration.AwsAccessKey, configuration.AwsSecretAccessKey, RegionEndpoint.GetBySystemName(configuration.Region));
     _applicationDbContext = applicationDbContext;
-
   }
 
   public async Task<OperationResult<object>> UploadFileAsync(IFormFile file)
@@ -109,7 +108,7 @@ public class FileRepository : IFileRepository
           var downloadFileName = file.FileName;
           var filePath = Path.Combine("/home/godfreyowidi/Downloads/DropboxLike", downloadFileName);
 
-          GetObjectRequest request = new GetObjectRequest
+          var request = new GetObjectRequest
           {
             BucketName = _bucketName,
             Key = WebUtility.HtmlDecode(fileId).ToLowerInvariant()
@@ -145,12 +144,12 @@ public class FileRepository : IFileRepository
     }
   }
 
-  public async Task<List<FileEntity>> ListFilesAsync()
+  public async Task<OperationResult<List<FileEntity>>> ListFilesAsync()
   {
     try
     {
       var files = await _applicationDbContext.FileModels.ToListAsync();
-      return OperationResult<List<FileEntity>>.SuccessList(files);
+      return OperationResult<List<FileEntity>>.Success(files);
     }
     catch (Exception exception)
     {
