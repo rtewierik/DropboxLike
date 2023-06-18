@@ -16,7 +16,7 @@ public class OperationResult<T>
 
     public static OperationResult<T> Success(T result, HttpStatusCode? statusCode = null) =>
         new(result, statusCode);
-
+    
     public static OperationResult<T> Fail(string message, HttpStatusCode? statusCode = null) =>
         new(message, statusCode);
     

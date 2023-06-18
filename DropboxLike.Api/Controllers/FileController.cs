@@ -1,6 +1,7 @@
 using DropboxLike.Domain.Models;
 using DropboxLike.Domain.Repositories;
 using DropboxLike.Domain.Services;
+using DropboxLike.Domain.Services.File;
 using Microsoft.AspNetCore.Mvc;
 using File = DropboxLike.Domain.Models.File;
 
@@ -53,7 +54,6 @@ public class FileController : ControllerBase
       var message = $"Due to '{response.FailureMessage ?? "<>"}', your list was not loaded. Refresh your page!";
       return StatusCode(response.StatusCode, message);
     }
-    
     return Ok(response.Result);
   }
 

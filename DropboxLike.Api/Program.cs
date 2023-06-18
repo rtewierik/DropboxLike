@@ -1,7 +1,9 @@
+using System.Text;
 using DropboxLike.Domain.Configuration;
 using DropboxLike.Domain.Data;
+using DropboxLike.Domain.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,16 +35,30 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
             errorNumbersToAdd: null
         );
     }));
+builder.Services.AddIdentityCore<User>(options =>
+{
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 8;
+    options.User.RequireUniqueEmail = true;
+});
+
+builder.Services.AddIdentity<User, IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
 
 // 2. Add lowest layer components, namely repositories.
 builder.Services.AddScoped<DropboxLike.Domain.Repositories.IFileRepository, DropboxLike.Domain.Repositories.FileRepository>();
 
 // 3. Add higher layer components, namely services.
-builder.Services.AddScoped<DropboxLike.Domain.Services.IFileService, DropboxLike.Domain.Services.FileService>();
+builder.Services.AddScoped<DropboxLike.Domain.Services.File.IFileService, DropboxLike.Domain.Services.File.FileService>();
 
 // 4. Add even higher layer components, namely controllers and the related authorization and authentication.
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
+
 
 var app = builder.Build();
 
@@ -56,6 +72,7 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
