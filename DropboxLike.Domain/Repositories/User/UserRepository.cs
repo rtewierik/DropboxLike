@@ -87,17 +87,13 @@ public class UserRepository : IUserRepository
 
   public bool VerifyPassword(string password, string hashedPassword)
   {
-      var salt = Convert.FromBase64String(hashedPassword.Substring(0, 24));
-
-      byte[] computedHash;
-      using (var hmac = new HMACSHA256(salt))
+      using (var sha256 = SHA256.Create())
       {
-          computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+          var passwordBytes = Encoding.UTF8.GetBytes(password);
+          var hashedBytes = sha256.ComputeHash(passwordBytes);
+          var computedHashedPassword = Convert.ToBase64String(hashedBytes);
+          return hashedPassword == computedHashedPassword;
       }
-
-      string computedHashBase64 = Convert.ToBase64String(computedHash);
-
-      return hashedPassword.Equals(computedHashBase64);
   }
   
   public UserEntity GetUserByEmail(string email)

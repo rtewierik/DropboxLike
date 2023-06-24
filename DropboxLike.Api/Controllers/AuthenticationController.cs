@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using Amazon.Runtime.Internal.Util;
 using DropboxLike.Domain.Data.Entities;
 using DropboxLike.Domain.Models;
 using DropboxLike.Domain.Services.User;
@@ -23,18 +24,11 @@ public class AuthenticationController : ControllerBase
     {
         if (ModelState.IsValid)
         {
-            using (var hmac = new HMACSHA256())
+            using (var sha256 = SHA256.Create())
             {
-                byte[] salt = new byte[16];
-                new RNGCryptoServiceProvider().GetBytes(salt);
-
-                byte[] hashedPasswordBytes = hmac.ComputeHash(Encoding.UTF8.GetBytes(userEntity.Password));
-
-                byte[] combinedBytes = new byte[salt.Length + hashedPasswordBytes.Length];
-                Buffer.BlockCopy(salt, 0, combinedBytes, 0, salt.Length);
-                Buffer.BlockCopy(hashedPasswordBytes, 0, combinedBytes, salt.Length, hashedPasswordBytes.Length);
-
-                var hashedPassword = Convert.ToBase64String(combinedBytes);
+                var passwordBytes = Encoding.UTF8.GetBytes(userEntity.Password);
+                var hashedBytes = sha256.ComputeHash(passwordBytes);
+                var hashedPassword = Convert.ToBase64String(hashedBytes);
                 var user = new UserEntity
                     { Email = userEntity.Email, Token = userEntity.Token, Password = hashedPassword };
 
