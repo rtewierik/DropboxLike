@@ -1,5 +1,7 @@
 using DropboxLike.Domain.Configuration;
 using DropboxLike.Domain.Data;
+using DropboxLike.Domain.Middlewares;
+using DropboxLike.Domain.Repositories.File;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,7 +27,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     }));
 
 // 2. Add lowest layer components, namely repositories.
-builder.Services.AddScoped<DropboxLike.Domain.Repositories.IFileRepository, DropboxLike.Domain.Repositories.FileRepository>();
+builder.Services.AddScoped<IFileRepository, FileRepository>();
 builder.Services
     .AddScoped<DropboxLike.Domain.Repositories.User.IUserRepository,
         DropboxLike.Domain.Repositories.User.UserRepository>();
@@ -41,6 +43,8 @@ builder.Services.AddControllers();
 
 
 var app = builder.Build();
+
+app.UseMiddleware<TokenvalidationMiddleware>();
 
 if (!app.Environment.IsDevelopment())
 {

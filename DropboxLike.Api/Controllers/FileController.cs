@@ -1,4 +1,5 @@
 using DropboxLike.Domain.Services.File;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using File = DropboxLike.Domain.Models.File;
 
@@ -18,6 +19,7 @@ public class FileController : ControllerBase
 
   [HttpPost]
   [Route("Upload")]
+  [Authorize]
   public async Task<IActionResult> UploadFileAsync(IFormFile file)
   {
     var response = await _fileService.UploadSingleFileAsync(file);
