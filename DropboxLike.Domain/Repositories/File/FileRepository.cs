@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Linq;
 using System.Net;
 using Amazon;
 using Amazon.S3;
@@ -9,11 +8,9 @@ using DropboxLike.Domain.Configuration;
 using DropboxLike.Domain.Data;
 using DropboxLike.Domain.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
-using File = DropboxLike.Domain.Models.File;
 
-namespace DropboxLike.Domain.Repositories;
+namespace DropboxLike.Domain.Repositories.File;
 
 public class FileRepository : IFileRepository
 {
@@ -74,7 +71,7 @@ public class FileRepository : IFileRepository
     }
   }
 
-  public async Task<OperationResult<File>> DownloadFileAsync(string fileId)
+  public async Task<OperationResult<Models.File>> DownloadFileAsync(string fileId)
   {
     try
     {
@@ -121,7 +118,7 @@ public class FileRepository : IFileRepository
               await response.ResponseStream.CopyToAsync(fileStream);
             }
             var contentType = response.Headers.ContentType;
-            return OperationResult<File>.Success(new File
+            return OperationResult<Models.File>.Success(new Models.File
             {
               FileStream = response.ResponseStream,
               ContentType = contentType
@@ -130,17 +127,17 @@ public class FileRepository : IFileRepository
         }
       }
 
-      return OperationResult<File>.Fail($"{HttpStatusCode.NotFound}: File not found.", HttpStatusCode.NotFound);
+      return OperationResult<Models.File>.Fail($"{HttpStatusCode.NotFound}: File not found.", HttpStatusCode.NotFound);
     }
     catch (AmazonS3Exception exception)
     {
       var message = $"{exception.StatusCode}: {exception.Message}";
-      return OperationResult<File>.Fail(exception, message, exception.StatusCode);
+      return OperationResult<Models.File>.Fail(exception, message, exception.StatusCode);
     }
     catch (Exception exception)
     {
       var message = $"{HttpStatusCode.InternalServerError}: {exception.Message}";
-      return OperationResult<File>.Fail(exception, message);
+      return OperationResult<Models.File>.Fail(exception, message);
     }
   }
 

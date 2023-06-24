@@ -6,5 +6,5 @@ namespace DropboxLike.Domain.Repositories.User;
 public interface IUserRepository
 {
     Task<OperationResult<object>> AddUser(UserEntity user);
-    Task<OperationResult<UserEntity>> GetUserById(string id);
+    Task<OperationResult<object>> AuthenticateUser(string email, string password);
 }

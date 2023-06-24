@@ -1,11 +1,13 @@
-using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DropboxLike.Domain.Data.Entities;
-public class UserEntity : IdentityUser
+public class UserEntity
 {
-    public int Id { get; set; }
-    public string? FirstName { get; set; }
-    public string? LastName { get; set; }
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public string? Id { get; set; }
     public string? Email { get; set; }
     public string? Password { get; set; }
+    public string? Token { get; set; }
 }

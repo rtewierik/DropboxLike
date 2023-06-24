@@ -1,3 +1,4 @@
+using Amazon.Runtime.Internal.Auth;
 using DropboxLike.Domain.Data.Entities;
 using DropboxLike.Domain.Models;
 using DropboxLike.Domain.Repositories.User;
@@ -12,15 +13,14 @@ public class UserService : IUserService
         {
             _userRepository = userRepository;
         }
-
-
-        public async Task<OperationResult<UserEntity>> GetUserByEmailAsync(string id)
+        
+        public async Task<OperationResult<object>> RegisterUser(UserEntity user)
         {
-            return await _userRepository.GetUserById(id);
+            return await _userRepository.AddUser(user);
         }
 
-        public Task<UserEntity> GetUserByIdAsync(string id)
+        public async Task<OperationResult<object>> LoginUser(string email, string password)
         {
-            throw new NotImplementedException();
+            return await _userRepository.AuthenticateUser(email, password);
         }
 }
