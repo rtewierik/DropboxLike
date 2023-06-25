@@ -5,15 +5,13 @@ namespace DropboxLike.Domain.Middlewares;
 public class TokenvalidationMiddleware
 {
     private readonly RequestDelegate _next;
-    private readonly ApplicationDbContext _applicationDbContext;
 
-    public TokenvalidationMiddleware(RequestDelegate next, ApplicationDbContext applicationDbContext)
+    public TokenvalidationMiddleware(RequestDelegate next)
     {
-        _applicationDbContext = applicationDbContext;
         _next = next;
     }
 
-    public async Task InvokeAsync(HttpContext context)
+    public async Task InvokeAsync(HttpContext context, ApplicationDbContext _applicationDbContext)
     {
         var token = context.Request.Headers["Authorization"].ToString()?.Replace("Bearer ", "");
         var userId = context.Request.Headers["X-User-Id"].FirstOrDefault();

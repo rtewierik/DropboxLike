@@ -37,7 +37,9 @@ builder.Services.AddScoped<DropboxLike.Domain.Services.File.IFileService, Dropbo
 builder.Services
     .AddScoped<DropboxLike.Domain.Services.User.IUserService, DropboxLike.Domain.Services.User.UserService>();
 
+
 // 4. Add even higher layer components, namely controllers and the related authorization and authentication.
+builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 
