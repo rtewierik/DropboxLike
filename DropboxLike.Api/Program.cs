@@ -2,6 +2,7 @@ using DropboxLike.Domain.Configuration;
 using DropboxLike.Domain.Data;
 using DropboxLike.Domain.Middlewares;
 using DropboxLike.Domain.Repositories.File;
+using DropboxLike.Domain.Repositories.Token;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,7 +40,14 @@ builder.Services
 
 
 // 4. Add even higher layer components, namely controllers and the related authorization and authentication.
-builder.Services.AddAuthentication();
+builder.Services.AddAuthentication(options => 
+{ 
+    options.DefaultScheme = TokenAuthenticationSchemeOptions.Name; 
+})
+.AddScheme<TokenAuthenticationSchemeOptions, TokenAuthenticationHandler>(
+    TokenAuthenticationSchemeOptions.Name, option => { }
+);
+
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 
