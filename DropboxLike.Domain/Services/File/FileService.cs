@@ -1,5 +1,4 @@
 using DropboxLike.Domain.Models;
-using DropboxLike.Domain.Repositories;
 using DropboxLike.Domain.Repositories.File;
 
 namespace DropboxLike.Domain.Services.File;
