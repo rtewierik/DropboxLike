@@ -1,10 +1,14 @@
+using DropboxLike.Domain.Repositories.Token;
 using DropboxLike.Domain.Services.File;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DropboxLike.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[TokenAuthenticationFilter]
+//[Authorize]
 public class FileController : ControllerBase
 {
   private readonly IFileService _fileService;
