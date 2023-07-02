@@ -8,12 +8,12 @@ namespace DropboxLike.Domain.Repositories.Token;
 public class TokenManager : ITokenManager
 {
     private readonly JwtSecurityTokenHandler _tokenHandler;
-    private byte[] secretKey;
+    private readonly byte[] _secretKey;
 
     public TokenManager()
     {
         _tokenHandler = new JwtSecurityTokenHandler();
-        secretKey = Encoding.ASCII.GetBytes("rekfjdhabdjekkrnabrisnakelsntjsn");
+        _secretKey = "rekfjdhabdjekkrnabrisnakelsntjsn"u8.ToArray();
     }
     
     public bool Authenticate(string email, string password)
@@ -29,10 +29,12 @@ public class TokenManager : ITokenManager
     {
         var tokenDescriptor = new SecurityTokenDescriptor
         {
-            Subject = new ClaimsIdentity(new Claim[] { new Claim(ClaimTypes.Name, "Godfrey Owidi") }),
-            Expires = DateTime.UtcNow.AddMinutes(1),
+            Subject = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, "Godfrey Owidi") }),
+            Issuer = "localhost",
+            Audience = "DropboxLike",
+            Expires = DateTime.UtcNow.AddHours(1),
             SigningCredentials = new SigningCredentials(
-                new SymmetricSecurityKey(secretKey), SecurityAlgorithms.HmacSha256Signature)
+                new SymmetricSecurityKey(_secretKey), SecurityAlgorithms.HmacSha256Signature)
         };
         var token = _tokenHandler.CreateToken(tokenDescriptor);
         var jwtString = _tokenHandler.WriteToken(token);
@@ -44,12 +46,12 @@ public class TokenManager : ITokenManager
         var claims = _tokenHandler.ValidateToken(token, new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(secretKey),
+            IssuerSigningKey = new SymmetricSecurityKey(_secretKey),
             ValidateLifetime = true,
             ValidateAudience = false,
             ValidateIssuer = false,
             ClockSkew = TimeSpan.Zero
-        }, out SecurityToken validatedToken);
+        }, out _);
         
         return claims;
     }

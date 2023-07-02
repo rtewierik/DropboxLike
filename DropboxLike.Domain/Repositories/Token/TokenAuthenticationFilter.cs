@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace DropboxLike.Domain.Repositories.Token;
 
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
 public class TokenAuthenticationFilter : Attribute, IAuthorizationFilter
 {
     public void OnAuthorization(AuthorizationFilterContext context)
