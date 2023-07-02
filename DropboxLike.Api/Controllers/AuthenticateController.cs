@@ -1,7 +1,5 @@
-using DropboxLike.Domain.Repositories.Token;
-using Microsoft.AspNetCore.Authorization;
+using DropboxLike.Domain.Services.Token;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace DropboxLike.Api.Controllers;
 
@@ -24,12 +22,5 @@ public class AuthenticateController : ControllerBase
         }
         ModelState.AddModelError("Unauthorized", "You are not authorized");
         return Unauthorized(ModelState);
-    }
-
-    [Route("test")]
-    [Authorize]
-    public IActionResult Test()
-    {
-        return Ok();
     }
 }

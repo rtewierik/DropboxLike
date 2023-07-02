@@ -1,9 +1,8 @@
-using System.Text;
 using DropboxLike.Domain.Configuration;
 using DropboxLike.Domain.Data;
 using DropboxLike.Domain.Repositories.File;
-using DropboxLike.Domain.Repositories.Token;
 using DropboxLike.Domain.Services.File;
+using DropboxLike.Domain.Services.Token;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;

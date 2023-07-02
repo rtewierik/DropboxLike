@@ -1,9 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 using Microsoft.IdentityModel.Tokens;
 
-namespace DropboxLike.Domain.Repositories.Token;
+namespace DropboxLike.Domain.Services.Token;
 
 public class TokenManager : ITokenManager
 {
@@ -25,6 +24,7 @@ public class TokenManager : ITokenManager
         return false;
     }
 
+    // TODO: Add an email or user ID argument to initialize a claim that allows us to identify the user from JWT.
     public string NewToken()
     {
         var tokenDescriptor = new SecurityTokenDescriptor
@@ -39,20 +39,5 @@ public class TokenManager : ITokenManager
         var token = _tokenHandler.CreateToken(tokenDescriptor);
         var jwtString = _tokenHandler.WriteToken(token);
         return jwtString;
-    }
-
-    public ClaimsPrincipal VerifyToken(string token)
-    {
-        var claims = _tokenHandler.ValidateToken(token, new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(_secretKey),
-            ValidateLifetime = true,
-            ValidateAudience = false,
-            ValidateIssuer = false,
-            ClockSkew = TimeSpan.Zero
-        }, out _);
-        
-        return claims;
     }
 }
